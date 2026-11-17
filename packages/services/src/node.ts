@@ -3647,3 +3647,5 @@ function buildAgentClientLanguageEnv(locale: string | undefined): Record<string,
   const value = locale?.trim();
   return value && /^[\x20-\x7e]+$/.test(value) ? { [ZCODE_CLIENT_LANGUAGE_ENV]: value } : {};
 }
+
+export { createVerificationService } from "./verification/module.js";

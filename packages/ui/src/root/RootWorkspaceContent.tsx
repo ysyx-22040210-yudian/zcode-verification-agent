@@ -47,6 +47,7 @@ interface RootWorkspaceContentProps {
   allowOpenWorkspace: NonNullable<RootProps["allowOpenWorkspace"]>;
   webRemoteControlWorkspaceSwitcher?: RootProps["webRemoteControlWorkspaceSwitcher"];
   initialSidebarFileTreeOpen?: boolean;
+  initialWorkspaceMainView?: AppProps["initialWorkspaceMainView"];
   initialWebRemoteControlMobileNavigationIntent?: RootProps["initialWebRemoteControlMobileNavigationIntent"];
   webRemoteControlTerminalTransportState?: RootProps["webRemoteControlTerminalTransportState"];
   isDesktop?: RootProps["isDesktop"];
@@ -90,6 +91,7 @@ export function RootWorkspaceContent({
   allowOpenWorkspace,
   webRemoteControlWorkspaceSwitcher,
   initialSidebarFileTreeOpen,
+  initialWorkspaceMainView,
   initialWebRemoteControlMobileNavigationIntent,
   webRemoteControlTerminalTransportState,
   isDesktop,
@@ -176,6 +178,7 @@ export function RootWorkspaceContent({
                 allowOpenWorkspace={allowOpenWorkspace}
                 webRemoteControlWorkspaceSwitcher={webRemoteControlWorkspaceSwitcher}
                 initialSidebarFileTreeOpen={initialSidebarFileTreeOpen}
+                initialWorkspaceMainView={initialWorkspaceMainView}
                 initialWebRemoteControlMobileNavigationIntent={
                   initialWebRemoteControlMobileNavigationIntent
                 }

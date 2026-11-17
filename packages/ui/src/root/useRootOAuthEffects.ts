@@ -84,6 +84,7 @@ export function useRootOAuthEffects({
   oauthPollingActive,
   setOAuthPollingActive,
   markOAuthSuccess,
+  showReauthenticationPrompt = true,
   onReauthenticationRequired,
 }: {
   accountIntentKey: string;
@@ -97,10 +98,12 @@ export function useRootOAuthEffects({
   oauthPollingActive: boolean;
   setOAuthPollingActive: (active: boolean) => void;
   markOAuthSuccess: (provider?: OAuthProviderId) => void;
+  showReauthenticationPrompt?: boolean;
   onReauthenticationRequired: () => void;
 }) {
   useAccountConnectionLossNotification(services, accountIntentKey, refreshAppSettings);
   const requestAlert = useAlertDialog();
+  const requestReauthenticationAlert = showReauthenticationPrompt ? requestAlert : undefined;
   const { intl } = useZCodeIntl();
   const oauthLoginSucceededRef = useRef(false);
   const oauthLoginSuccessInFlightRef = useRef(false);
@@ -123,7 +126,7 @@ export function useRootOAuthEffects({
         hasRestoredUser = await applyCachedOAuthSessionRestoreResult({
           result,
           setUser,
-          requestAlert,
+          requestAlert: requestReauthenticationAlert,
           onReauthenticationRequired,
           shouldReauthenticate: async () =>
             !disposed && (await services.oauthService.getActiveProvider()) === null,
@@ -183,7 +186,7 @@ export function useRootOAuthEffects({
     onReauthenticationRequired,
     refreshAppSettings,
     refreshProviderState,
-    requestAlert,
+    requestReauthenticationAlert,
     services,
     setIsRestoringOAuthSession,
     setUser,
@@ -200,7 +203,7 @@ export function useRootOAuthEffects({
       // 业务 token 撤销后仍显示头像并要求重启会阻断恢复；与启动过期共用 Welcome 登录入口。
       void requestOAuthReauthentication({
         setUser,
-        requestAlert,
+        requestAlert: requestReauthenticationAlert,
         onReauthenticationRequired: () => {
           if (!disposed) onReauthenticationRequired();
         },
@@ -221,7 +224,13 @@ export function useRootOAuthEffects({
       disposed = true;
       disposable.dispose();
     };
-  }, [intl, onReauthenticationRequired, requestAlert, services.broadcastService, setUser]);
+  }, [
+    intl,
+    onReauthenticationRequired,
+    requestReauthenticationAlert,
+    services.broadcastService,
+    setUser,
+  ]);
 
   useEffect(() => {
     if (!oauthPollingActive) {

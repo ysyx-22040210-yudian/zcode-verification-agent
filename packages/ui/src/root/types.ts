@@ -57,6 +57,8 @@ export interface RootProps {
   platform: IPlatformService;
   /** 如果从 main 进程传入则跳过项目选择页 */
   initialWorkspaceAbsPath?: string;
+  /** Open a local project in the native Verification workbench. */
+  openLocalVerification?: boolean;
   /** app-owned workspace 展示分类；缺省为真实项目。 */
   initialWorkspacePurpose?: import("@zcode/shared").WorkspacePurpose;
   /** 桌面启动时精确 active 的本地 workspace 不可用；仅用于本次 renderer 生命周期。 */

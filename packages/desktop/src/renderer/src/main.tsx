@@ -137,6 +137,7 @@ const restoreSession = readBooleanFlag("restoreSession", true);
 const supportsSettings = readBooleanFlag("supportsSettings", true);
 const initialWorkspaceAbsPath = readStringFlag("initialWorkspacePath");
 const initialWorkspacePurpose = readStringFlag("initialWorkspacePurpose");
+const openLocalVerification = readBooleanFlag("openLocalVerification", false);
 const unavailableWorkspacePath = readStringFlag("unavailableWorkspacePath");
 const windowKind = readStringFlag("windowKind");
 const initialLocaleFlag = readStringFlag("locale");
@@ -339,6 +340,7 @@ function initializeBusinessRoot(port: MessagePort): void {
     managedWorktreeService: true,
     // 扩展门面只在桌面本机 Host 注册（docs/plugins/extension-host.md）。
     extensionsService: true,
+    verificationService: true,
   });
   baseServicesForRemoteSessions = services;
   registerBaseWorkspaceServices(services);
@@ -371,6 +373,7 @@ function initializeBusinessRoot(port: MessagePort): void {
           restoreSession={restoreSession}
           supportsSettings={supportsSettings}
           initialWorkspaceAbsPath={initialWorkspaceAbsPath}
+          openLocalVerification={openLocalVerification}
           initialWorkspacePurpose={
             initialWorkspacePurpose === "conversation" ? "conversation" : "project"
           }

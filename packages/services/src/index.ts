@@ -421,3 +421,5 @@ export type {
   GroupNode,
   MoveGroupNode,
 } from "#src/task-groups/contract.js";
+
+export * from "./verification/contract.js";

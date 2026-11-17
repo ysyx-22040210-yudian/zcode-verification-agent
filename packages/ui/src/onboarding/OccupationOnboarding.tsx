@@ -37,6 +37,7 @@ export function OccupationOnboarding({
   children,
   showWindowControls = false,
   showChildrenWhileLoading = false,
+  autoOpen = true,
   isMacDesktop,
   isWindowsDesktop,
 }: {
@@ -45,6 +46,7 @@ export function OccupationOnboarding({
   showWindowControls?: boolean;
   /** 独立设置页不依赖引导设置加载，避免应用级引导外层遮住设置内容。 */
   showChildrenWhileLoading?: boolean;
+  autoOpen?: boolean;
   isMacDesktop?: boolean;
   isWindowsDesktop?: boolean;
 }) {
@@ -82,7 +84,7 @@ export function OccupationOnboarding({
     loadDeviceMid,
     update,
   });
-  const onboardingVisible = requested || (needsOnboarding === true && !dismissed);
+  const onboardingVisible = requested || (autoOpen && needsOnboarding === true && !dismissed);
   const captureEnd = useOnboardingTelemetry({
     platform,
     visible:
@@ -212,6 +214,7 @@ export function OccupationOnboarding({
     applyLatestEntry();
     // eslint-disable-line react-hooks/exhaustive-deps
   }, [latestEntry]);
+  if (!autoOpen && !requested) return <>{children}</>;
   if (!settings) return showChildrenWhileLoading ? <>{children}</> : null;
   // 判定进行中先不渲染，避免引导闪现后立即消失（判定为需引导）或先闪引导再进主界面。
   // 只有疑似首跑（settings 里也没有职业）才等待记录判定；存量用户（已有

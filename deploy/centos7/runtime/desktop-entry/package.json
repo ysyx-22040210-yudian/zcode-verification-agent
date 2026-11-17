@@ -1,0 +1,7 @@
+{
+  "name": "zcode-verification-app",
+  "productName": "ZCode",
+  "version": "3.18.2",
+  "type": "module",
+  "main": "entry.mjs"
+}

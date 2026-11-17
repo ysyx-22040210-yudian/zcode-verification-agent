@@ -201,6 +201,7 @@ export interface AppProps {
   workspaceAbsPath: string;
   workspaceRemoteSessionId?: string;
   workspaceIdentity?: string;
+  initialWorkspaceMainView?: WorkspaceMainView;
   isWorkspaceVisible?: boolean;
   isDesktop?: boolean;
   isMacDesktop?: boolean;
@@ -213,7 +214,7 @@ export interface GitChangeSummary {
   removed: number;
 }
 
-export type WorkspaceMainView = "chat" | "automations" | "plugin-store";
+export type WorkspaceMainView = "chat" | "automations" | "plugin-store" | "verification";
 
 export interface WorkspaceShellLayoutProps extends Omit<AppProps, "baseFeedbackService"> {
   workspaceReadOnlyReason?: string;

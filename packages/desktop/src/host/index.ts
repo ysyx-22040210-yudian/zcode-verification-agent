@@ -66,6 +66,7 @@ import {
   IExtensionGrantsService,
   IPluginManagementService,
   IWindowControllerService,
+  IVerificationService,
   IConversationShareService,
   IPromptAttachmentTransferService,
   IZCodeAgentService,
@@ -79,6 +80,7 @@ import {
 } from "@zcode/services";
 import {
   createLocalServices,
+  createVerificationService,
   createProjectWorkspaceNavigation,
   createRemoteProjectConnectionAdmission,
   releaseRemoteProjectProfileHost,
@@ -4320,6 +4322,10 @@ parentPort.on("message", async (e: Electron.MessageEvent) => {
               cuaOperationStateReporter:
                 process.platform === "win32" ? cuaOperationStateReporter : undefined,
             });
+            initializedServices.register(
+              IVerificationService,
+              createVerificationService(process.env.ZCODE_VERIFICATION_SOCKET),
+            );
             activeServices = initializedServices;
             activeHostApiNetworkTransport = hostApiNetworkTransport;
             return initializedServices;

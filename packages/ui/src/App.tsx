@@ -135,6 +135,7 @@ export function App({
   workspaceAbsPath,
   workspaceRemoteSessionId,
   workspaceIdentity: explicitWorkspaceIdentity,
+  initialWorkspaceMainView = "chat",
   isWorkspaceVisible = true,
   isDesktop,
   isMacDesktop,
@@ -901,7 +902,8 @@ export function App({
     ],
   );
   useTestActions(testActions);
-  const [workspaceMainView, setWorkspaceMainView] = useState<WorkspaceMainView>("chat");
+  const [workspaceMainView, setWorkspaceMainView] =
+    useState<WorkspaceMainView>(initialWorkspaceMainView);
   const [openAutomationId, setOpenAutomationId] = useState<string | null>(null);
   const [openAutomationTab, setOpenAutomationTab] = useState<NonNullable<
     AutomationsNavigationTarget["automationTab"]

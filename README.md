@@ -1,5 +1,7 @@
 # ZCode
 
+> **验证 Agent** · CentOS 7 VM 原生桌面、SV/UVM/Formal 作业和免登录验证工作台。[部署与运行说明](deploy/centos7/README.md)
+
 <div align="center">
   <img src="public/logo/icons/1024x1024.png" alt="ZCode" width="128" height="128" />
 </div>

@@ -145,6 +145,9 @@ export function loadWindow(
   );
 
   if (page === "index") {
+    if (bootstrap?.initialWorkspacePurpose === "project" && process.env.ZCODE_VERIFICATION_SOCKET) {
+      query.openLocalVerification = "true";
+    }
     const partial = getMainLaunchPartialMarks();
     query[LAUNCH_MARKS_QUERY_KEY] = serializeLaunchMarks({
       ...partial,

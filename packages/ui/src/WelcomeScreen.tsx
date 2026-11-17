@@ -133,6 +133,7 @@ const LOGIN_PRIVACY_URL = "https://zcode.z.ai/privacy";
 
 interface WelcomeScreenProps {
   onComplete: (reason: LoginCompleteReason) => void | Promise<void>;
+  onDismiss?: () => void;
 }
 
 export type LoginCompleteReason = "oauth" | "apiKey" | "skip";
@@ -145,7 +146,7 @@ export function resolveLoginRegionForLocale(locale: string): SingleLoginRegion {
   return locale === "en-US" ? "global" : "domestic";
 }
 
-export function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
+export function WelcomeScreen({ onComplete, onDismiss }: WelcomeScreenProps) {
   const { intl } = useZCodeIntl();
   const platform = usePlatform();
   return (
@@ -158,7 +159,7 @@ export function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
       <div className="relative z-10 flex h-dvh flex-col items-center overflow-y-auto px-4 pb-6 pt-14 sm:px-6">
         <div className="flex w-full flex-1 shrink-0 items-center justify-center py-6">
           <section className="flex w-full max-w-sm shrink-0 flex-col gap-7 rounded-2xl bg-background p-8 text-ui-base/relaxed shadow-md sm:p-10">
-            <LoginPanel active onComplete={onComplete} />
+            <LoginPanel active onComplete={onComplete} onDismiss={onDismiss} />
           </section>
         </div>
         <footer className="pointer-events-none flex shrink-0 flex-col items-center gap-2 text-center text-ui-xs text-foreground-subtle">
@@ -191,9 +192,8 @@ export function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
   );
 }
 
-interface LoginPanelProps {
+interface LoginPanelProps extends WelcomeScreenProps {
   active: boolean;
-  onComplete: (reason: LoginCompleteReason) => void | Promise<void>;
 }
 
 interface ActiveLoginEntryAttempt {
@@ -215,7 +215,7 @@ export function shouldCompleteLoginFromExistingUser(params: {
   return params.hasUser && !params.attempt;
 }
 
-export function LoginPanel({ active, onComplete }: LoginPanelProps) {
+export function LoginPanel({ active, onComplete, onDismiss }: LoginPanelProps) {
   const { intl, locale, setLocalePreference } = useZCodeIntl();
   const {
     startLogin,
@@ -433,6 +433,26 @@ export function LoginPanel({ active, onComplete }: LoginPanelProps) {
     }
   }, [authorizeUrl, intl]);
 
+  const resetLoginPanel = useCallback(() => {
+    if (status === "waiting") {
+      void cancel(pendingProvider ?? undefined);
+    }
+    finishActiveLoginEntryAttempt("cancelled");
+    reset();
+    setOAuthError(null);
+    clearLoginEntryRequest();
+    resetApiKeyForm();
+  }, [
+    cancel,
+    clearLoginEntryRequest,
+    finishActiveLoginEntryAttempt,
+    pendingProvider,
+    reset,
+    resetApiKeyForm,
+    setOAuthError,
+    status,
+  ]);
+
   useEffect(() => {
     if (active) {
       wasActiveRef.current = true;
@@ -443,26 +463,8 @@ export function LoginPanel({ active, onComplete }: LoginPanelProps) {
       return;
     }
     wasActiveRef.current = false;
-
-    if (status === "waiting") {
-      void cancel(pendingProvider ?? undefined);
-    }
-    finishActiveLoginEntryAttempt("cancelled");
-    reset();
-    setOAuthError(null);
-    clearLoginEntryRequest();
-    resetApiKeyForm();
-  }, [
-    active,
-    cancel,
-    clearLoginEntryRequest,
-    finishActiveLoginEntryAttempt,
-    pendingProvider,
-    reset,
-    resetApiKeyForm,
-    setOAuthError,
-    status,
-  ]);
+    resetLoginPanel();
+  }, [active, resetLoginPanel]);
 
   return (
     <>
@@ -652,6 +654,19 @@ export function LoginPanel({ active, onComplete }: LoginPanelProps) {
           </div>
         )}
       </div>
+      {onDismiss ? (
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => {
+            if (loginEntryRequest) markLoginEntryAttemptStatus(loginEntryRequest.id, "cancelled");
+            resetLoginPanel();
+            onDismiss();
+          }}
+        >
+          {intl.formatMessage({ id: "login.skip" })}
+        </Button>
+      ) : null}
     </>
   );
 }

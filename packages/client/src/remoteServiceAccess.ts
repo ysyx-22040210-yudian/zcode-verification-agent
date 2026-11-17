@@ -2,6 +2,7 @@ import { IGenUiService } from "@zcode/services";
 import { ProxyChannel, type IChannelClient } from "@zcode/rpc";
 import {
   IFileService,
+  IVerificationService,
   IMediaPreviewService,
   IGitService,
   IGitCheckpointService,
@@ -76,6 +77,7 @@ import {
 export class RemoteServiceAccess implements IServiceAccessor {
   readonly windowProjectDirectory?: WindowProjectDirectoryServices;
   readonly fileService: IFileService;
+  readonly verificationService?: IVerificationService;
   readonly mediaPreviewService: IMediaPreviewService;
   readonly gitService: IGitService;
   readonly gitCheckpointService: IGitCheckpointService;
@@ -149,6 +151,7 @@ export class RemoteServiceAccess implements IServiceAccessor {
       sourceServerManagementService?: boolean;
       deviceSyncStateService?: boolean;
       extensionsService?: boolean;
+      verificationService?: boolean;
       managedWorktreeService?: boolean;
       windowProjectDirectory?: boolean;
     } = {},
@@ -167,6 +170,9 @@ export class RemoteServiceAccess implements IServiceAccessor {
         ),
       };
     }
+    this.verificationService = options.verificationService
+      ? ProxyChannel.toService(channelClient.getChannel(IVerificationService.channelName))
+      : undefined;
     this.fileService = ProxyChannel.toService<IFileService>(
       channelClient.getChannel(IFileService.channelName),
     );

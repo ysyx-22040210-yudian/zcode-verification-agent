@@ -1830,6 +1830,31 @@ modules:
       adapters: .
     owner: agent
 
+  - id: verification-service
+    roots:
+      - packages/services/src/verification
+    managed: true
+    requires: [services]
+    publicEntrypoints:
+      - packages/services/src/verification/module.ts
+      - packages/services/src/verification/contract.ts
+    layers:
+      adapters: .
+    owner: desktop
+  # verification-workbench：由 architecture:adopt 登记
+  - id: verification-workbench
+    roots:
+      - packages/ui/src/verification-workbench
+    managed: true
+    requires: [ui]
+    publicEntrypoints:
+      - packages/ui/src/verification-workbench/module.ts
+      - packages/ui/src/verification-workbench/contract.ts
+    layers:
+      ui: .
+    owner: desktop
+
+
 global:
   # 临时时间戳（2026-09-10）：unmanaged-new-file 只约束此日期之后首次入库的文件。
   # 基于领先 staging 很多的分支开工时，merge-base 之前的"新增"文件不应被追溯。

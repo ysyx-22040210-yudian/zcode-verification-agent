@@ -209,6 +209,7 @@ function RootInner({
   services,
   platform,
   initialWorkspaceAbsPath,
+  openLocalVerification,
   unavailableWorkspacePath,
   initialWorkspaceIdentity,
   initialWorkspacePurpose,
@@ -229,6 +230,13 @@ function RootInner({
   webRemoteControlTerminalTransportState,
   initialWorkspaceLoadingFallback,
 }: RootProps) {
+  const isLocalVerificationStartup = Boolean(
+    isDesktop &&
+    openLocalVerification &&
+    initialWorkspaceAbsPath &&
+    !initialWorkspaceIdentity &&
+    !webRemoteControlWorkspaceSwitcher,
+  );
   const credentialRecovery = useCredentialStoreRecovery(isDesktop === true);
   useInterfaceModeTelemetry(platform, isDesktop === true);
   useEffect(() => {
@@ -298,9 +306,10 @@ function RootInner({
     codingPlanSubscriptionService: services.codingPlanSubscriptionService,
   });
   const [welcomeScreenOpenReason, setWelcomeScreenOpenReason] =
-    useState<WelcomeScreenOpenReason | null>(() =>
-      consumeZcodeJwtInvalidRestartMarker() ? "session-expired" : null,
-    );
+    useState<WelcomeScreenOpenReason | null>(() => {
+      const sessionExpired = consumeZcodeJwtInvalidRestartMarker();
+      return sessionExpired && !isLocalVerificationStartup ? "session-expired" : null;
+    });
   const [providerFamilyDomainMigrationComplete, setProviderFamilyDomainMigrationComplete] =
     useState(false);
   const loginEntryRequest = useZCodeStore((state) => state.loginEntryRequest);
@@ -587,7 +596,7 @@ function RootInner({
 
   const shouldPreferDirectoryBrowser = Boolean(preferDirectoryBrowser);
   const supportsEmbeddedBrowser = explicitSupportsEmbeddedBrowser ?? Boolean(isDesktop);
-  const isResolvingStartupAuthState = isRestoringOAuthSession;
+  const isResolvingStartupAuthState = !isLocalVerificationStartup && isRestoringOAuthSession;
   const rootProviderAvailability = resolveProviderAvailabilityState({
     modelSelectionView: rootModelSelectionView,
   });
@@ -598,6 +607,7 @@ function RootInner({
   });
   const isWebRemoteControlRoot = Boolean(webRemoteControlWorkspaceSwitcher);
   const providerAvailabilityLoginEntryGuardEnabled =
+    !isLocalVerificationStartup &&
     shouldEnableProviderAvailabilityLoginEntryGuard({
       isWebRemoteControlRoot,
     });
@@ -626,11 +636,13 @@ function RootInner({
         });
       },
     });
-  const isResolvingProviderStartupState = shouldResolveProviderStartupState({
-    isWebRemoteControlRoot,
-    providerStartupSyncPending,
-    providerAvailabilityStartupCheckCompleted,
-  });
+  const isResolvingProviderStartupState =
+    !isLocalVerificationStartup &&
+    shouldResolveProviderStartupState({
+      isWebRemoteControlRoot,
+      providerStartupSyncPending,
+      providerAvailabilityStartupCheckCompleted,
+    });
   const isStartupProviderLoginEntryOpen = welcomeScreenOpenReason === "startup-provider-required";
   // 首次安装时 provider 登录入口判定晚于 workspace 注入，ChatView 会先 mount 并触发草稿预热。
   // 这里把 provider 启动检查纳入 workspace 恢复门禁，避免未连接账号前启动 ZCode session。
@@ -730,7 +742,7 @@ function RootInner({
     setOAuthError,
     setUser,
     onProviderFamilyDomainClearedAfterLogout: () => {
-      setWelcomeScreenOpenReason("logout-provider-required");
+      if (!isLocalVerificationStartup) setWelcomeScreenOpenReason("logout-provider-required");
     },
     userId: user?.id,
     onOpenRemoteConnection: allowRemoteWorkspace ? handleOpenRemoteConnection : undefined,
@@ -1056,7 +1068,7 @@ function RootInner({
     webRemoteControlFeatureEnabled,
     hasCompletedFullTabRestore: hasCompletedFullRestore,
     intl,
-    isRestoringOAuthSession: isResolvingStartupAuthState || providerStartupSyncPending,
+    isRestoringOAuthSession: isRestoringOAuthSession || providerStartupSyncPending,
   });
 
   useEffect(() => {
@@ -1095,6 +1107,7 @@ function RootInner({
     oauthPollingActive,
     setOAuthPollingActive,
     markOAuthSuccess,
+    showReauthenticationPrompt: !isLocalVerificationStartup,
     onReauthenticationRequired: handleReauthenticationRequired,
   });
 
@@ -1269,6 +1282,9 @@ function RootInner({
   // 登录入口不依赖会话；保持引用稳定，避免草稿更新穿透侧栏 memo。
   const handleOpenLoginEntry = useCallback(() => {
     setWelcomeScreenOpenReason("manual-login");
+  }, []);
+  const handleDismissWelcomeScreen = useCallback(() => {
+    setWelcomeScreenOpenReason(null);
   }, []);
   const handleWelcomeScreenComplete = useCallback(
     async (reason: LoginCompleteReason) => {
@@ -1552,7 +1568,10 @@ function RootInner({
         {requestSecurityBridgeNode}
         {remoteConnectionDialog}
         {directoryBrowserDialog}
-        <WelcomeScreen onComplete={handleWelcomeScreenComplete} />
+        <WelcomeScreen
+          onComplete={handleWelcomeScreenComplete}
+          onDismiss={isLocalVerificationStartup ? handleDismissWelcomeScreen : undefined}
+        />
       </RootShell>
     );
   }
@@ -1611,6 +1630,7 @@ function RootInner({
       {remoteConnectionDialog}
       {directoryBrowserDialog}
       <OccupationOnboarding
+        autoOpen={!isLocalVerificationStartup}
         showWindowControls={Boolean(isWindowsDesktop || (isDesktop && !isMacDesktop))}
         showChildrenWhileLoading={!workspaceShellPath && isSettingsTabActive}
         isMacDesktop={isMacDesktop}
@@ -1674,6 +1694,13 @@ function RootInner({
                 allowOpenWorkspace={allowOpenWorkspace}
                 webRemoteControlWorkspaceSwitcher={webRemoteControlWorkspaceSwitcher}
                 initialSidebarFileTreeOpen={initialSidebarFileTreeOpen}
+                initialWorkspaceMainView={
+                  isLocalVerificationStartup &&
+                  workspaceShellPath === initialWorkspaceAbsPath &&
+                  !workspaceShellRemoteSessionId
+                    ? "verification"
+                    : undefined
+                }
                 initialWebRemoteControlMobileNavigationIntent={
                   initialWebRemoteControlMobileNavigationIntent
                 }

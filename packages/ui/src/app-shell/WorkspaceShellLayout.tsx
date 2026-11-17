@@ -98,6 +98,7 @@ import {
 import type { WebRemoteNavigationState } from "@/app-shell/webRemoteNavigationLayout.js";
 import { cn } from "@/components/lib/utils.js";
 import { Button } from "@/components/ui/button.js";
+import { VerificationEntry, VerificationWorkbench } from "@/verification-workbench/module.js";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.js";
 import { toast } from "@/components/ui/toast.js";
 import {
@@ -1481,6 +1482,8 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
   const primaryNavigationBack =
     workspaceMainView === "plugin-store" ? showChatMainView : handleTaskNavBack;
   const canPrimaryNavigationBack = workspaceMainView === "plugin-store" || canTaskNavBack;
+  const localVerification = Boolean(isDesktop && !isWebRemoteControlShell && !workspaceRemoteSessionId);
+  const showVerification = localVerification && workspaceMainView === "verification";
   useEffect(() => {
     if (
       isWebRemoteControlShell &&
@@ -2932,8 +2935,17 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                           <GripHorizontal className="size-4" />
                         </Button>
                       ) : null}
+                      {localVerification && workspaceAbsPath ? (
+                        <VerificationEntry
+                          active={showVerification}
+                          workspace={workspaceAbsPath}
+                          onToggle={() => onWorkspaceMainViewChange(showVerification ? "chat" : "verification")}
+                        />
+                      ) : null}
                       <div className="min-h-0 flex-1 overflow-hidden">
-                        {workspaceMainView === "automations" && !isWebRemoteControlShell ? (
+                        {showVerification && workspaceAbsPath ? (
+                          <VerificationWorkbench key={workspaceAbsPath} workspace={workspaceAbsPath} />
+                        ) : workspaceMainView === "automations" && !isWebRemoteControlShell ? (
                           <main
                             id={AUTOMATIONS_TOAST_ANCHOR_ID}
                             className="flex h-full min-h-0 flex-1 flex-col bg-background"

@@ -1,0 +1,54 @@
+version: 1
+name: Synchronous FIFO
+spec: SPEC.md
+inputs:
+  - SPEC.md
+  - sv.f
+  - uvm.f
+  - formal.f
+  - rtl/fifo.sv
+  - sv/fifo_smoke.sv
+  - uvm/fifo_uvm.sv
+  - formal/fifo_formal.sv
+  - formal/ifv.tcl
+profiles:
+  sv:
+    mode: sv
+    top: fifo_smoke
+    filelist: sv.f
+  uvm:
+    mode: uvm
+    top: fifo_uvm
+    filelist: uvm.f
+    test: fifo_test
+    mutant: true
+    coverage: true
+  formal:
+    mode: formal
+    top: fifo_formal
+    filelist: formal.f
+    script: formal/ifv.tcl
+    mutant: true
+    properties:
+      p_simultaneous_hold: assert
+      p_count_range: assert
+      c_simultaneous: cover
+checks:
+  - id: FIFO-RESET
+    title: Reset clears occupancy and asserts empty
+    profiles: [sv, uvm]
+  - id: FIFO-ORDER
+    title: Accepted reads preserve insertion order
+    profiles: [sv, uvm]
+  - id: FIFO-BOUNDS
+    title: Occupancy stays between zero and four
+    profiles: [uvm, formal]
+    property: p_count_range
+  - id: FIFO-SIMULTANEOUS
+    title: Simultaneous accepted operations preserve occupancy
+    profiles: [uvm, formal]
+    property: p_simultaneous_hold
+  - id: FIFO-REACH
+    title: Simultaneous accepted operations are reachable
+    profiles: [uvm, formal]
+    property: c_simultaneous
