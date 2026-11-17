@@ -22,6 +22,8 @@ A local workspace with an available runner exposes a Verification view. Read and
 
 The FIFO acceptance exercises good and mutated RTL through VCS/UVM and IFV, enables evidence links and replays, and checks that a run submitted through MCP appears by the same ID in the Electron view.
 
+When the workbench has room for two columns, the run history and selected evidence extend to the bottom of the window. Long history and evidence scroll within their own panels. A narrow workbench stacks the panels in the page scroll and keeps long evidence in a scrollable viewer. Native desktop acceptance resizes the same FIFO report between short, tall, and narrow windows, then opens a counterexample waveform.
+
 ## Local desktop startup
 
 When the native launcher opens a local project with `ZCODE_VERIFICATION_SOCKET` configured, the desktop window opens the Verification view. The window bootstrap owns this decision for the lifetime of the renderer. Workspace restore and verification do not wait for model provisioning or require an account. The first-run occupation onboarding does not open automatically in this window. Verification calls still use the runner socket, and an unavailable runner is reported by the Verification view.
