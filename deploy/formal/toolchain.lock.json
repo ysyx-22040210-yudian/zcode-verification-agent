@@ -1,0 +1,149 @@
+{
+  "format": 1,
+  "packages": {
+    "cpython-linux-x64": {
+      "file": "cpython-3.11.15+20260602-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+      "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20260602/cpython-3.11.15%2B20260602-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+      "sha256": "4b79bcb83a22961c8972f8d1d4780bd8925f0b52688d95b090a488f31c8b1139",
+      "targets": [
+        "linux-x64"
+      ]
+    },
+    "cpython-win-x64": {
+      "file": "cpython-3.11.15+20260602-x86_64-pc-windows-msvc-install_only_stripped.tar.gz",
+      "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20260602/cpython-3.11.15%2B20260602-x86_64-pc-windows-msvc-install_only_stripped.tar.gz",
+      "sha256": "f606681b2327210e2e7edf8c33f5260ea05d50f0c5b546f7c9fd535b21ec627a",
+      "targets": [
+        "win-x64"
+      ]
+    },
+    "yowasp-yosys": {
+      "file": "yowasp_yosys-0.50.0.0.post858-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/35/0a/6f20773834f59ecb470a4135c7020afb12029fa86a0884ec6e3ee196519e/yowasp_yosys-0.50.0.0.post858-py3-none-any.whl",
+      "sha256": "05eb4107600c27146c83244b40afbdcec852d94783c57bc710c063e9e2bc68e2",
+      "targets": [
+        "linux-x64",
+        "win-x64"
+      ]
+    },
+    "yowasp-runtime": {
+      "file": "yowasp_runtime-1.76-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/a1/2b/2781cde033507853452bf1e924f6f211a80a4723edc9b302ddf5b9da8ece/yowasp_runtime-1.76-py3-none-any.whl",
+      "sha256": "749181a5950764882a2bb33572d5337b0a8b96039a4f578bb78499974c08dff6",
+      "targets": [
+        "linux-x64",
+        "win-x64"
+      ]
+    },
+    "wasmtime-linux-x64": {
+      "file": "wasmtime-21.0.0-py3-none-manylinux1_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/15/59/a81d1b029048dd5f3fe0c957032c54584f3a040a85c99cb79ccc7d0a1f53/wasmtime-21.0.0-py3-none-manylinux1_x86_64.whl",
+      "sha256": "6587515be9603f8bb0732f3b508d2034f21d407fd55879c4402032e40e1ddae6",
+      "targets": [
+        "linux-x64"
+      ]
+    },
+    "wasmtime-win-x64": {
+      "file": "wasmtime-21.0.0-py3-none-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/36/4a/34072d748baa377f1ce37f9b3eb4a31dc5688e406ca60c022bd6c5d3199f/wasmtime-21.0.0-py3-none-win_amd64.whl",
+      "sha256": "00f929d0caf58a69890df00888f9da12c2aa3ed5af4c8b7b2dca96a4996da731",
+      "targets": [
+        "win-x64"
+      ]
+    },
+    "z3-solver-linux-x64": {
+      "file": "z3_solver-4.13.4.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/03/53/928b21d33618c86b290408883323dbae27c307951385a634498d3507abbd/z3_solver-4.13.4.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "2fb8a857adf1064f89581c424fd729ee3e8bad95f4ebf0fb4c1210f65b831f37",
+      "targets": [
+        "linux-x64"
+      ]
+    },
+    "z3-solver-win-x64": {
+      "file": "z3_solver-4.13.4.0-py3-none-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/3c/4b/5626ed801d6fb4b383628a544af6cc0c53b3ef00451e2e524c5013a39316/z3_solver-4.13.4.0-py3-none-win_amd64.whl",
+      "sha256": "fafb65d7bb04db93e4a46f4357042fd53b420b412db66f0a0053612ed15024ca",
+      "targets": [
+        "win-x64"
+      ]
+    },
+    "platformdirs": {
+      "file": "platformdirs-4.3.6-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/3c/a6/bc1012356d8ece4d66dd75c4b9fc6c1f6650ddd5991e421177d9f8f671be/platformdirs-4.3.6-py3-none-any.whl",
+      "sha256": "73e575e1408ab8103900836b97580d5307456908a03e92031bab39e4554cc3fb",
+      "targets": [
+        "linux-x64",
+        "win-x64"
+      ]
+    },
+    "importlib-resources": {
+      "file": "importlib_resources-6.5.2-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl",
+      "sha256": "789cfdc3ed28c78b67a06acb8126751ced69a3d5f79c095a98298cd8a760ccec",
+      "targets": [
+        "linux-x64",
+        "win-x64"
+      ]
+    },
+    "click": {
+      "file": "click-8.1.8-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/7e/d4/7ebdbd03970677812aac39c869717059dbb71a4cfc033ca6e5221787892c/click-8.1.8-py3-none-any.whl",
+      "sha256": "63c132bbbed01578a06712a2d1f497bb62d9c1c0d329b7903a866228027263b2",
+      "targets": [
+        "linux-x64",
+        "win-x64"
+      ]
+    },
+    "colorama": {
+      "file": "colorama-0.4.6-py2.py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl",
+      "sha256": "4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6",
+      "targets": [
+        "win-x64"
+      ]
+    },
+    "PyYAML-linux-x64": {
+      "file": "PyYAML-6.0.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/75/e4/2c27590dfc9992f73aabbeb9241ae20220bd9452df27483b6e56d3975cc5/PyYAML-6.0.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "3ad2a3decf9aaba3d29c8f537ac4b243e36bef957511b4766cb0057d32b0be85",
+      "targets": [
+        "linux-x64"
+      ]
+    },
+    "PyYAML-win-x64": {
+      "file": "PyYAML-6.0.2-cp311-cp311-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/ed/23/8da0bbe2ab9dcdd11f4f4557ccaf95c10b9811b13ecced089d43ce59c3c8/PyYAML-6.0.2-cp311-cp311-win_amd64.whl",
+      "sha256": "e10ce637b18caea04431ce14fabcf5c64a1c61ec9c56b071a4b7ca131ca52d44",
+      "targets": [
+        "win-x64"
+      ]
+    },
+    "yosys-COPYING": {
+      "file": "yosys-COPYING",
+      "url": "https://raw.githubusercontent.com/YosysHQ/yosys/v0.50/COPYING",
+      "sha256": "916aa7a48576ccbfe4142fddd7e4bf3c5d6ece4b1f24f3d2ec70198c99da3a92",
+      "targets": [
+        "linux-x64",
+        "win-x64"
+      ]
+    },
+    "z3-LICENSE.txt": {
+      "file": "z3-LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/Z3Prover/z3/z3-4.13.4/LICENSE.txt",
+      "sha256": "e617cad2ab9347e3129c2b171e87909332174e17961c5c3412d0799469111337",
+      "targets": [
+        "linux-x64",
+        "win-x64"
+      ]
+    },
+    "sby-COPYING": {
+      "file": "sby-COPYING",
+      "url": "https://raw.githubusercontent.com/YosysHQ/sby/v0.50/COPYING",
+      "sha256": "6fca2f7a0a28abfb6aa97ad591d82ce3298fef9f80f0f584298b5b3cb1ed5dd2",
+      "targets": [
+        "linux-x64",
+        "win-x64"
+      ]
+    }
+  }
+}

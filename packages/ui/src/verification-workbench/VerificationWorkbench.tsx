@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from "react";
+import { Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { VerificationEntryProps, VerificationFrameProps, VerificationRun, VerificationSnapshot, VerificationVariant } from "./contract.js";
-import { useVerificationService } from "./useVerificationService.js";
+import { useDesignQueryService, useVerificationService } from "./useVerificationService.js";
+import { CoveragePanel } from "./CoveragePanel.js";
 import { Waveform } from "./Waveform.js";
 
 const selectClass = "rounded-md border border-border bg-input px-2 py-1 text-ui-sm text-foreground";
 const statusClass = "rounded border border-border bg-surface px-1.5 py-0.5 text-ui-xs";
 const isActive = (run: VerificationRun) => run.status === "queued" || run.status === "running";
 
-export function VerificationEntry({ active, onToggle }: VerificationEntryProps) {
+export function VerificationEntry({ active, onToggle, toolsActive, onToolsToggle, knowledgeActive, onKnowledgeToggle, designActive, onDesignToggle, fsdbActive, onFsdbToggle }: VerificationEntryProps) {
   const service = useVerificationService();
   const { locale } = useZCodeIntl();
   const [available, setAvailable] = useState(false);
@@ -28,7 +30,21 @@ export function VerificationEntry({ active, onToggle }: VerificationEntryProps) 
 
   if (!available) return null;
   return (
-    <div className="flex shrink-0 justify-end border-b border-border bg-background px-3 py-1">
+    <div className="flex shrink-0 flex-wrap justify-end border-b border-border bg-background px-3 py-1">
+      <Button type="button" size="sm" variant={toolsActive ? "secondary" : "ghost"} aria-pressed={toolsActive}
+        data-testid="verification-tools-entry" onClick={onToolsToggle}>
+        <Wrench className="size-3.5" aria-hidden="true" />{locale.startsWith("zh") ? "工具" : "Tools"}
+      </Button>
+      <Button type="button" size="sm" variant={fsdbActive ? "secondary" : "ghost"} aria-pressed={fsdbActive}
+        data-testid="fsdb-entry" onClick={onFsdbToggle}>{locale.startsWith("zh") ? "FSDB 波形" : "FSDB waves"}</Button>
+      <Button type="button" size="sm" variant={designActive ? "secondary" : "ghost"}
+        aria-pressed={designActive} data-testid="design-query-entry" onClick={onDesignToggle}>
+        {locale.startsWith("zh") ? "RTL 查询" : "RTL query"}
+      </Button>
+      <Button type="button" size="sm" variant={knowledgeActive ? "secondary" : "ghost"}
+        aria-pressed={knowledgeActive} data-testid="knowledge-entry" onClick={onKnowledgeToggle}>
+        {locale.startsWith("zh") ? "知识库" : "Knowledge base"}
+      </Button>
       <Button type="button" size="sm" variant={active ? "secondary" : "ghost"} aria-pressed={active}
         data-testid="verification-entry" onClick={onToggle}>
         {label}
@@ -48,10 +64,12 @@ function describe(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-export function VerificationWorkbench({ workspace }: VerificationFrameProps) {
+export function VerificationWorkbench({ workspace, onOpenFsdb }: VerificationFrameProps & { onOpenFsdb: (path: string) => void }) {
+  const designService = useDesignQueryService();
   const service = useVerificationService();
   const { locale } = useZCodeIntl();
   const zh = locale.startsWith("zh");
+  const [coverageOpen, setCoverageOpen] = useState(false);
   const [snapshot, setSnapshot] = useState<VerificationSnapshot | null>(null);
   const [notice, setNotice] = useState<string>();
   const [revision, setRevision] = useState(0);
@@ -118,6 +136,11 @@ export function VerificationWorkbench({ workspace }: VerificationFrameProps) {
     if (!service) return;
     const request = ++evidenceRequest.current;
     try {
+      if (name.toLowerCase().endsWith(".fsdb") && designService) {
+        const artifact = await designService.fsdbArtifact(workspace, target.id, name);
+        if (evidenceRequest.current === request) onOpenFsdb(artifact.path);
+        return;
+      }
       const page = await service.readArtifact(workspace, target.id, name, previous?.nextOffset ?? 0);
       if (evidenceRequest.current !== request) return;
       setEvidence({ runId: target.id, name, text: (previous?.text ?? "") + page.text, nextOffset: page.nextOffset });
@@ -127,6 +150,7 @@ export function VerificationWorkbench({ workspace }: VerificationFrameProps) {
   }
 
   if (!service) return null;
+  if (coverageOpen) return <CoveragePanel key={workspace} workspace={workspace} runId={run?.coverage ? run.id : undefined} onClose={() => setCoverageOpen(false)} />;
   return (
     <main
       data-testid="verification-workbench"
@@ -135,6 +159,9 @@ export function VerificationWorkbench({ workspace }: VerificationFrameProps) {
       <div className="shrink-0 space-y-3 border-b border-border px-5 py-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-ui-xl font-semibold">{zh ? "验证工作台" : "Verification"}</h1>
+          <Button type="button" variant="outline" size="sm" data-testid="coverage-entry" onClick={() => setCoverageOpen(true)}>
+            {zh ? "覆盖率数据" : "Coverage data"}
+          </Button>
           {snapshot ? <span className="text-ui-caption text-foreground-subtle">{snapshot.name} · {snapshot.spec}</span> : null}
         </div>
         {notice ? <p role="alert" className="text-ui-sm text-foreground-subtle">{notice}</p> : null}
@@ -150,7 +177,7 @@ export function VerificationWorkbench({ workspace }: VerificationFrameProps) {
               <select className={selectClass} data-testid="verification-profile" value={activeProfile}
                 onChange={(event) => setProfile(event.currentTarget.value)}>
                 {Object.entries(snapshot.profiles).map(([id, item]) => (
-                  <option key={id} value={id}>{id} · {item.mode.toUpperCase()}</option>
+                  <option key={id} value={id}>{id} · {item.backend === "yosys" ? "Yosys + Z3" : (item.backend ?? item.mode).toUpperCase()}</option>
                 ))}
               </select>
             </label>
@@ -260,6 +287,12 @@ export function VerificationWorkbench({ workspace }: VerificationFrameProps) {
                         <code className="text-ui-xs">{property.name}</code>
                         <span className={statusClass}>{property.status}</span>
                         {property.depth === undefined ? null : <span>{zh ? "深度" : "Depth"} {property.depth}</span>}
+                        {property.trace ? (
+                          <Button type="button" size="sm" variant="ghost"
+                            onClick={() => { if (property.trace) void openEvidence(run, property.trace); }}>
+                            {property.status === "counterexample" ? (zh ? "查看反例" : "View counterexample") : (zh ? "查看波形" : "View trace")}
+                          </Button>
+                        ) : null}
                       </li>
                     ))}
                   </ul>

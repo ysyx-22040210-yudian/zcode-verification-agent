@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+kit=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+exec "$kit/formal-toolchain/python/bin/python3.11" -E -s -X utf8 "$kit/portable.py" "$@"
+

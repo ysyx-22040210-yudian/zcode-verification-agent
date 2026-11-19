@@ -3,6 +3,8 @@ import { ProxyChannel, type IChannelClient } from "@zcode/rpc";
 import {
   IFileService,
   IVerificationService,
+  IDesignQueryService,
+  IKnowledgeFilingService,
   IMediaPreviewService,
   IGitService,
   IGitCheckpointService,
@@ -78,6 +80,8 @@ export class RemoteServiceAccess implements IServiceAccessor {
   readonly windowProjectDirectory?: WindowProjectDirectoryServices;
   readonly fileService: IFileService;
   readonly verificationService?: IVerificationService;
+  readonly designQueryService?: IDesignQueryService;
+  readonly knowledgeFilingService?: IKnowledgeFilingService;
   readonly mediaPreviewService: IMediaPreviewService;
   readonly gitService: IGitService;
   readonly gitCheckpointService: IGitCheckpointService;
@@ -172,6 +176,12 @@ export class RemoteServiceAccess implements IServiceAccessor {
     }
     this.verificationService = options.verificationService
       ? ProxyChannel.toService(channelClient.getChannel(IVerificationService.channelName))
+      : undefined;
+    this.designQueryService = options.verificationService
+      ? ProxyChannel.toService<IDesignQueryService>(channelClient.getChannel(IDesignQueryService.channelName))
+      : undefined;
+    this.knowledgeFilingService = options.verificationService
+      ? ProxyChannel.toService<IKnowledgeFilingService>(channelClient.getChannel(IKnowledgeFilingService.channelName))
       : undefined;
     this.fileService = ProxyChannel.toService<IFileService>(
       channelClient.getChannel(IFileService.channelName),

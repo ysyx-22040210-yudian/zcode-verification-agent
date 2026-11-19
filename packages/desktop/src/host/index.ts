@@ -67,6 +67,8 @@ import {
   IPluginManagementService,
   IWindowControllerService,
   IVerificationService,
+  IDesignQueryService,
+  IKnowledgeFilingService,
   IConversationShareService,
   IPromptAttachmentTransferService,
   IZCodeAgentService,
@@ -81,6 +83,8 @@ import {
 import {
   createLocalServices,
   createVerificationService,
+  createDesignQueryService,
+  createKnowledgeFilingService,
   createProjectWorkspaceNavigation,
   createRemoteProjectConnectionAdmission,
   releaseRemoteProjectProfileHost,
@@ -4325,6 +4329,14 @@ parentPort.on("message", async (e: Electron.MessageEvent) => {
             initializedServices.register(
               IVerificationService,
               createVerificationService(process.env.ZCODE_VERIFICATION_SOCKET),
+            );
+            initializedServices.register(
+              IDesignQueryService,
+              createDesignQueryService(process.env.ZCODE_VERIFICATION_SOCKET),
+            );
+            initializedServices.register(
+              IKnowledgeFilingService,
+              createKnowledgeFilingService(process.env.ZCODE_VERIFICATION_SOCKET),
             );
             activeServices = initializedServices;
             activeHostApiNetworkTransport = hostApiNetworkTransport;

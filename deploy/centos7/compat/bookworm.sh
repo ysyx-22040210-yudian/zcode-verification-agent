@@ -22,12 +22,31 @@ for file in hosts resolv.conf; do
   mount --bind "/etc/$file" "$rootfs/etc/$file"
   mount -o remount,bind,ro "$rootfs/etc/$file"
 done
-for name in zcode fifo runner cache runtime artifacts evidence probes; do
+# Keep the shipped KDBs visible to Electron at the same paths as the native runner.
+for name in zcode fifo runner cache runtime artifacts evidence probes knowledge examples; do
   if [ -d "$base/$name" ]; then
     install -d "$rootfs$base/$name"
     mount --bind "$base/$name" "$rootfs$base/$name"
+    if [ "$name" = knowledge ]; then
+      mount -o remount,bind,ro "$rootfs$base/$name"
+    fi
   fi
 done
+# Make the VM user's document locations available to the native file picker.
+user_home="$(getent passwd host | cut -d: -f6)"
+for key in DOCUMENTS DOWNLOAD DESKTOP; do
+  location="$(runuser -u host -- env HOME="$user_home" xdg-user-dir "$key" 2>/dev/null || true)"
+  case "$location" in "$user_home/"*) ;; *) continue ;; esac
+  [ -d "$location" ] || continue
+  install -d "$rootfs$location"
+  mount --bind "$location" "$rootfs$location"
+  mount -o remount,bind,ro "$rootfs$location"
+done
+if mountpoint -q /mnt/hgfs; then
+  install -d "$rootfs/mnt/hgfs"
+  mount --bind /mnt/hgfs "$rootfs/mnt/hgfs"
+  mount -o remount,bind,ro "$rootfs/mnt/hgfs"
+fi
 if [ -n "${VERIFICATION_WORKSPACE:-}" ]; then
   target="$(readlink -f -- "$VERIFICATION_WORKSPACE")"
   case "$target" in

@@ -3,12 +3,20 @@
 import json
 import os
 import sys
+import tempfile
 from pathlib import Path
 
 
 def main():
     project = Path(__file__).resolve().parent.parent
     profile = Path(sys.argv[1]) if len(sys.argv) > 1 else project / "runtime" / "build-home"
+    skills = profile / ".zcode" / "skills"
+    skills.mkdir(parents=True, exist_ok=True)
+    for name in ("verification-knowledge", "verification-tools"):
+        try:
+            (skills / name).symlink_to(project / "runner" / "skills" / name, target_is_directory=True)
+        except FileExistsError:
+            pass
     config = profile / ".zcode" / "cli" / "config.json"
     config.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     data = json.loads(config.read_text(encoding="utf-8")) if config.exists() else {}
@@ -19,15 +27,16 @@ def main():
         "enabled": True,
         "timeoutMs": 20000,
     }
-    data.setdefault("features", {})["mcp"] = True
+    features = data.setdefault("features", {})
     servers = data.setdefault("mcp", {}).setdefault("servers", {})
-    if servers.get("verification") == server and config.exists():
+    if servers.get("verification") == server and features.get("mcp") is True:
         return
+    features["mcp"] = True
     servers["verification"] = server
-    temporary = config.with_suffix(".new")
-    temporary.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    temporary.chmod(0o600)
-    os.replace(str(temporary), str(config))
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf8", dir=str(config.parent), delete=False) as output:
+        json.dump(data, output, indent=2, ensure_ascii=False)
+        output.write("\n")
+    os.replace(output.name, str(config))
 
 
 if __name__ == "__main__":

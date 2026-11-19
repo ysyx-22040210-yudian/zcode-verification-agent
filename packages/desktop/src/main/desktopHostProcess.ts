@@ -47,6 +47,7 @@ import {
 } from "electron";
 import { randomUUID } from "node:crypto";
 import { isAbsolute, join } from "node:path";
+import { access } from "node:fs/promises";
 import { BroadcastHub } from "./broadcastHub.js";
 import { bindDatabaseStartupRelay } from "./databaseStartupRelay.js";
 import { getMainLaunchPartialMarks } from "./desktopLaunchMarks.js";
@@ -125,7 +126,7 @@ export function listDisposingHostProcesses(): ElectronUtilityProcess[] {
   return Array.from(disposingHostProcesses);
 }
 
-export function loadWindow(
+export async function loadWindow(
   win: BrowserWindow,
   page: "index" | "login" = "index",
   bootstrap?: WindowBootstrapOptions,
@@ -145,7 +146,9 @@ export function loadWindow(
   );
 
   if (page === "index") {
-    if (bootstrap?.initialWorkspacePurpose === "project" && process.env.ZCODE_VERIFICATION_SOCKET) {
+    if (bootstrap?.initialWorkspacePurpose === "project" && bootstrap.initialWorkspacePath &&
+        process.env.ZCODE_VERIFICATION_SOCKET &&
+        await access(join(bootstrap.initialWorkspacePath, "verify.yaml")).then(() => true, () => false)) {
       query.openLocalVerification = "true";
     }
     const partial = getMainLaunchPartialMarks();

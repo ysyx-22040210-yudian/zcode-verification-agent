@@ -100,6 +100,8 @@ export interface PdfViewerProps extends HTMLAttributes<HTMLDivElement> {
   source: PdfViewerSource;
   labels?: Partial<PdfViewerLabels>;
   onLoadError?: (error: Error) => void;
+  initialPage?: number;
+  onPageChange?: (page: number) => void;
 }
 
 type PdfDocumentFile = string | Blob | { data: Uint8Array } | { range: PdfViewerRangeTransport };
@@ -119,8 +121,9 @@ function normalizePdfSource(
   return { data: new Uint8Array(source) };
 }
 
-export function PdfViewer({ source, labels, onLoadError, className, ...props }: PdfViewerProps) {
+export function PdfViewer({ source, labels, onLoadError, initialPage = 1, onPageChange, className, ...props }: PdfViewerProps) {
   const mergedLabels = { ...DEFAULT_LABELS, ...labels };
+  const startingPage = Number.isFinite(initialPage) ? Math.max(1, Math.round(initialPage)) : 1;
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageInput, setPageInput] = useState("1");
@@ -165,8 +168,6 @@ export function PdfViewer({ source, labels, onLoadError, className, ...props }: 
 
   useEffect(() => {
     setNumPages(null);
-    setPageNumber(1);
-    setPageInput("1");
     setRenderScale(pdfZoom.DEFAULT_SCALE);
     setDisplayScale(pdfZoom.DEFAULT_SCALE);
     setPageIntrinsicSize(null);
@@ -177,6 +178,15 @@ export function PdfViewer({ source, labels, onLoadError, className, ...props }: 
     pendingZoomAnchorRef.current = null;
     clearZoomOverlay();
   }, [clearZoomOverlay, file]);
+
+  useEffect(() => {
+    setPageNumber(startingPage);
+    setPageInput(String(startingPage));
+    setPageIntrinsicSize(null);
+    pendingZoomAnchorRef.current = null;
+    pendingScrollToTopRef.current = true;
+    clearZoomOverlay();
+  }, [clearZoomOverlay, file, startingPage]);
 
   const goToPage = useCallback(
     (target: number) => {
@@ -191,9 +201,10 @@ export function PdfViewer({ source, labels, onLoadError, className, ...props }: 
         pendingZoomAnchorRef.current = null;
         pendingScrollToTopRef.current = true;
         setPageNumber(clamped);
+        onPageChange?.(clamped);
       }
     },
-    [clearZoomOverlay, numPages, pageNumber],
+    [clearZoomOverlay, numPages, onPageChange, pageNumber],
   );
 
   const handlePageRenderSuccess = useCallback(

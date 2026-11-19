@@ -22,6 +22,8 @@ A local workspace with an available runner exposes a Verification view. Read and
 
 The FIFO acceptance exercises good and mutated RTL through VCS/UVM and IFV, enables evidence links and replays, and checks that a run submitted through MCP appears by the same ID in the Electron view.
 
+The local toolbar also opens the [Knowledge base](verification-knowledge.md), which uses the same native service for indexed reference manuals.
+
 When the workbench has room for two columns, the run history and selected evidence extend to the bottom of the window. Long history and evidence scroll within their own panels. A narrow workbench stacks the panels in the page scroll and keeps long evidence in a scrollable viewer. Native desktop acceptance resizes the same FIFO report between short, tall, and narrow windows, then opens a counterexample waveform.
 
 ## Local desktop startup

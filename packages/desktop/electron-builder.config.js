@@ -72,6 +72,9 @@ const macSigningIdentity =
 const shouldEnableMacSigning =
   process.env.ZCODE_ENABLE_MAC_SIGN === "1" && Boolean(macSigningIdentity);
 const workspaceRoot = resolve(import.meta.dirname, "../..");
+const formalTarget = { "win32-x64": "win-x64", "linux-x64": "linux-x64" }[targetPlatform.key];
+const formalStage = formalTarget && mkdtempSync(join(tmpdir(), "zcode-formal-package-"));
+if (formalStage) process.once("exit", () => rmSync(formalStage, { recursive: true, force: true }));
 const desktopPackageRoot = import.meta.dirname;
 // Computer Use Helper（macOS .app、Windows runtime）只随真实 producer 打包；开源占位包下跳过随包资源与校验。
 const shouldPackageComputerUseHelper = isRealComputerUseProducerInstalled({ desktopPackageRoot });
@@ -692,6 +695,12 @@ export default {
     `node_modules/node-pty/prebuilds/${targetPlatform.key}/**`,
   ],
   beforePack: async (context) => {
+    if (formalStage) {
+      runCommand(process.env.PYTHON || (process.platform === "win32" ? "python" : "python3"), [
+        join(workspaceRoot, "deploy/formal/build_bundle.py"), formalTarget,
+        "--output", join(formalStage, "kit.zip"), "--install", join(formalStage, "kit"),
+      ]);
+    }
     runTimedSync("beforePack:restoreTargetNodePtyPrebuild", () =>
       restoreTargetNodePtyPrebuild({ desktopPackageRoot, targetPlatform }),
     );
@@ -819,6 +828,7 @@ export default {
     }
   },
   extraResources: [
+    ...(formalStage ? [{ from: join(formalStage, "kit"), to: "verification-formal" }] : []),
     ...(targetPlatform.os === "win32"
       ? [
           {

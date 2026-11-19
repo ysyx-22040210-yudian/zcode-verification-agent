@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "adapters": {
+    "site-fpv": {
+      "argv": ["/opt/site-formal/bin/run-fpv"]
+    }
+  }
+}
+

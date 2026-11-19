@@ -1,0 +1,11 @@
+version: 1
+name: FSDB waveform demo
+spec: SPEC.md
+inputs: [SPEC.md, demo.f, wave_demo.sv]
+profiles:
+  sv: {mode: sv, top: wave_demo, filelist: demo.f}
+checks:
+  - id: FSDB-TRACE
+    title: The two instances reflect their respective inputs at the end of the captured stimulus
+    profiles: [sv]
+

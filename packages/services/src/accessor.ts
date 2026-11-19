@@ -10,7 +10,7 @@ import type { IPluginUiBridgeService } from "./plugin-ui-bridge/contract.js";
 import type { IPluginUiSamplingService } from "./plugin-ui-bridge/samplingContract.js";
 import type { IPluginUiAppToolsService } from "./plugin-ui-bridge/appToolsContract.js";
 import type { IFileService } from "./file/file.js";
-import type { IVerificationService } from "./verification/contract.js";
+import type { IDesignQueryService, IKnowledgeFilingService, IVerificationService } from "./verification/contract.js";
 import type { IMediaPreviewService } from "./media-preview/mediaPreview.js";
 import type { ICloudContentService } from "#src/cloud-content/cloudContent.js";
 import type { IMarketingTouchService } from "#src/marketing-touch/marketingTouch.js";
@@ -74,6 +74,8 @@ export interface IServiceAccessor {
   readonly windowProjectDirectory?: WindowProjectDirectoryServices;
   readonly fileService: IFileService;
   readonly verificationService?: IVerificationService;
+  readonly designQueryService?: IDesignQueryService;
+  readonly knowledgeFilingService?: IKnowledgeFilingService;
   readonly mediaPreviewService?: IMediaPreviewService;
   readonly cloudContentService?: ICloudContentService;
   readonly marketingTouchService?: IMarketingTouchService;

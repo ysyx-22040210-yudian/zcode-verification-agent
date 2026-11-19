@@ -13,7 +13,8 @@ import uuid
 from hashlib import sha256
 from pathlib import Path
 
-from engines import run_ifv, run_vcs
+from engines import run_vcs
+from formal_backends import engine_name, run_formal
 from project import definition, inputs_digest, require
 
 
@@ -40,6 +41,12 @@ def load(path):
 
 
 def signal_group(process, sig):
+    if os.name == "nt":
+        # The adapter, SMTBMC and its solver all belong to this job.
+        subprocess.run([str(Path(os.environ["SystemRoot"]) / "System32/taskkill.exe"),
+                        "/PID", str(process.pid), "/T", "/F"], stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
+        return
     try:
         os.killpg(process.pid, sig)
     except ProcessLookupError:
@@ -52,6 +59,31 @@ def process_start_ticks(pid):
         return raw.rsplit(")", 1)[1].split()[19]
     except (OSError, IndexError):
         return None
+
+
+def retain_fsdb(work, evidence, inputs):
+    """Keep simulated FSDBs alongside run evidence without duplicating large files."""
+    output = evidence / "fsdb"
+    if output.exists() or output.is_symlink():
+        output = evidence / ("fsdb-" + uuid.uuid4().hex)
+    for directory, _, names in os.walk(str(work)):
+        for name in names:
+            if not name.lower().endswith(".fsdb"):
+                continue
+            path = Path(directory) / name
+            if path.is_symlink() or not path.is_file():
+                continue
+            relative = path.relative_to(work)
+            original = inputs / relative
+            if original.is_file():
+                old, current = original.stat(), path.stat()
+                if (old.st_mtime_ns, old.st_size) == (current.st_mtime_ns, current.st_size):
+                    continue
+            target = output / relative
+            require(evidence in target.resolve().parents, "Invalid FSDB evidence location")
+            target.parent.mkdir(parents=True, exist_ok=True)
+            # The runner creates work and evidence inside the same per-run directory.
+            os.link(str(path), str(target))
 
 
 class Jobs:
@@ -71,7 +103,7 @@ class Jobs:
                 self.pending.put(path)
             elif record["status"] == "running":
                 started = record.get("process")
-                if started and started["ticks"] == process_start_ticks(started["pid"]):
+                if started and started.get("ticks") and started["ticks"] == process_start_ticks(started["pid"]):
                     try:
                         os.killpg(started["pid"], signal.SIGKILL)
                     except ProcessLookupError:
@@ -131,7 +163,7 @@ class Jobs:
             record = {
                 "id": run_id, "workspace": str(workspace), "profileId": profile_id,
                 "profile": profile, "variant": variant, "seed": seed, "test": profile.get("test"),
-                "engine": "IFV" if profile["mode"] == "formal" else "VCS",
+                "engine": engine_name(profile),
                 "status": "queued", "createdAt": timestamp(), "commands": [],
                 "inputDigest": digest, "inputHashes": inputs, "artifacts": [],
             }
@@ -192,7 +224,8 @@ class Jobs:
                         process.wait(2)
                     except subprocess.TimeoutExpired:
                         pass
-                    signal_group(process, signal.SIGKILL)
+                    if os.name != "nt":
+                        signal_group(process, signal.SIGKILL)
                     process.wait()
                     break
                 time.sleep(0.12)
@@ -219,12 +252,14 @@ class Jobs:
             deadline = time.monotonic() + record["profile"].get("timeoutSeconds", 180)
             try:
                 shutil.copytree(str(path.parent / "inputs"), str(work))
-                adapter = run_ifv if record["engine"] == "IFV" else run_vcs
+                adapter = run_formal if record["profile"]["mode"] == "formal" else run_vcs
 
                 def call(name, args):
                     return self.execute_command(path, work, evidence, name, args, deadline)
 
                 result = adapter(record, work, evidence, call)
+                if record["engine"] == "VCS":
+                    retain_fsdb(work, evidence, path.parent / "inputs")
             except Exception as error:
                 (evidence / "runner.log").write_text(str(error), encoding="utf-8")
                 result = {"status": "tool_error", "message": str(error)}
@@ -232,7 +267,7 @@ class Jobs:
             for item in sorted(evidence.rglob("*")):
                 if item.is_file() and not item.is_symlink():
                     relative = item.relative_to(evidence).as_posix()
-                    kind = "waveform" if item.suffix == ".vcd" else "coverage" if relative.startswith("coverage/") else "log"
+                    kind = "waveform" if item.suffix.lower() in (".vcd", ".fsdb") else "coverage" if relative.startswith("coverage/") else "log"
                     artifacts.append({"name": relative, "kind": kind, "bytes": item.stat().st_size})
             with self.lock:
                 record = load(path)
@@ -245,6 +280,7 @@ class Jobs:
         record = load(run_path)
         files = {item["name"]: item for item in record["artifacts"]}
         require(isinstance(name, str) and name in files, "Unknown artifact")
+        require(not name.lower().endswith(".fsdb"), "Open binary FSDB artifacts with the FSDB waveform tool")
         require(type(offset) is int and 0 <= offset <= files[name]["bytes"], "Invalid artifact offset")
         root = run_path.parent / "evidence"
         target = (root / name).resolve()
@@ -265,7 +301,8 @@ class Jobs:
                 current.setdefault(run["profileId"], run)
         requirements = {
             stage: [name for name, profile in config["profiles"].items()
-                    if stage == "report" or (stage == "formal") == (profile["mode"] == "formal")]
+                    if not (profile["mode"] == "formal" and profile.get("optional", False)) and
+                    (stage == "report" or (stage == "formal") == (profile["mode"] == "formal"))]
             for stage in ("simulation", "formal", "report")
         }
         progress_path = self.directory(workspace) / "stages.json"

@@ -11,6 +11,10 @@ import yaml
 IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_.$-]*$")
 
 
+def formal_backend(profile):
+    return profile.get("backend", "ifv" if "script" in profile else "yosys")
+
+
 def require(condition, description):
     if not condition:
         raise ValueError(description)
@@ -57,12 +61,25 @@ def definition(root):
             require(isinstance(profile.get("test"), str) and IDENTIFIER.fullmatch(profile["test"]),
                     "An executable UVM test is required")
         if mode == "formal":
-            require(profile.get("script") in inputs, "Formal Tcl script must be listed in inputs")
+            backend = formal_backend(profile)
+            require(isinstance(backend, str) and re.fullmatch(r"[a-z][a-z0-9_-]{0,47}", backend),
+                    "Invalid Formal backend ID")
+            if backend == "ifv" or "script" in profile:
+                require(profile.get("script") in inputs, "Formal script must be listed in inputs")
+            require(type(profile.get("optional", False)) is bool, "optional must be boolean")
+            if backend == "yosys":
+                require(profile.get("strategy", "prove") in ("prove", "bmc"), "Choose prove or bmc")
+                depth = profile.get("depth", 20)
+                require(type(depth) is int and 1 <= depth <= 2048, "Formal depth must be 1–2048")
             properties = profile.get("properties")
             require(isinstance(properties, dict) and bool(properties), "Formal properties are required")
             for key, kind in properties.items():
                 require(isinstance(key, str) and IDENTIFIER.fullmatch(key) and kind in ("assert", "cover"),
                         "Invalid Formal property")
+            if backend == "yosys":
+                require(all(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", label)
+                            for label in [profile["top"]] + list(properties)),
+                        "Yosys requires simple top and property identifiers")
     checks = data.get("checks")
     require(isinstance(checks, list) and bool(checks), "Declare requirements in checks")
     spec_text = relative_file(root, data["spec"]).read_text(encoding="utf-8")

@@ -1,4 +1,5 @@
 import { normalizeRemoteConnectionError } from "@zcode/shared";
+import { createDesignQueryService } from "@zcode/services/node";
 /* eslint-disable max-lines -- 远程连接、OAuth 回调、遥测和通知 IPC 共用窗口级上下文，集中注册避免跨文件状态漂移。 */
 import { app, BrowserWindow, ipcMain, shell, type WebContents } from "electron";
 import armsRum from "@arms/rum-electron";
@@ -384,6 +385,29 @@ export function registerRemoteIpcHandlers(options: {
         error: error instanceof Error ? error.message : String(error),
       });
     });
+  });
+
+  ipcMain.handle(PlatformChannels.OpenFsdbWaveform, async (event, input: unknown) => {
+    const parent = BrowserWindow.fromWebContents(event.sender);
+    if (!parent || event.senderFrame !== event.sender.mainFrame ||
+        !input || typeof input !== "object" || !("workspace" in input) || typeof input.workspace !== "string" ||
+        !("jobId" in input) || typeof input.jobId !== "string" || !/^[a-f0-9]{32}$/.test(input.jobId)) {
+      throw new Error("Invalid FSDB window request");
+    }
+    const service = createDesignQueryService(process.env.ZCODE_VERIFICATION_SOCKET);
+    const { html } = await service.fsdbViewer(input.workspace, input.jobId);
+    if (parent.isDestroyed()) return;
+    const viewer = new BrowserWindow({ parent, width: 1120, height: 680, show: false, autoHideMenuBar: true,
+      webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false, webviewTag: false } });
+    viewer.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+    viewer.webContents.on("will-navigate", (navigation) => navigation.preventDefault());
+    try {
+      await viewer.loadURL("data:text/html;charset=utf-8;base64," + Buffer.from(html, "utf8").toString("base64"));
+      if (!viewer.isDestroyed()) viewer.show();
+    } catch (error) {
+      if (!viewer.isDestroyed()) viewer.destroy();
+      throw error;
+    }
   });
 
   ipcMain.handle(PlatformChannels.OpenExternalFile, async (_event, rawPath: string) =>

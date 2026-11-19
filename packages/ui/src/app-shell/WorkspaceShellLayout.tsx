@@ -98,7 +98,9 @@ import {
 import type { WebRemoteNavigationState } from "@/app-shell/webRemoteNavigationLayout.js";
 import { cn } from "@/components/lib/utils.js";
 import { Button } from "@/components/ui/button.js";
-import { VerificationEntry, VerificationWorkbench } from "@/verification-workbench/module.js";
+import { CoveragePanel, DesignQueryPanel, FsdbPanel, KnowledgeLibrary, VerificationEntry, VerificationToolCatalog, VerificationWorkbench } from "@/verification-workbench/module.js";
+import { acquireWorkspaceConnection } from "@/v4/workspaceConnectionRegistry.js";
+import { createCommandEnvelope } from "@/v4/commandFactory.js";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.js";
 import { toast } from "@/components/ui/toast.js";
 import {
@@ -465,7 +467,7 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
   setGitSelectedSourceId,
   taskFindDialogProps,
 }: WorkspaceShellLayoutProps) {
-  const { intl } = useZCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const isOfficeMode = useIsOfficeMode();
   const baseServices = useBaseWorkspaceServices();
   const tabStoreApi = useTabStoreApi();
@@ -1484,6 +1486,12 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
   const canPrimaryNavigationBack = workspaceMainView === "plugin-store" || canTaskNavBack;
   const localVerification = Boolean(isDesktop && !isWebRemoteControlShell && !workspaceRemoteSessionId);
   const showVerification = localVerification && workspaceMainView === "verification";
+  const showKnowledge = localVerification && workspaceMainView === "knowledge-base";
+  const showDesignQuery = localVerification && workspaceMainView === "design-query";
+  const showVerificationTools = localVerification && workspaceMainView === "verification-tools";
+  const showCoverage = localVerification && workspaceMainView === "coverage-data";
+  const showFsdb = localVerification && workspaceMainView === "fsdb-wave";
+  const [fsdbArtifact, setFsdbArtifact] = useState<{ workspace: string; path: string }>();
   useEffect(() => {
     if (
       isWebRemoteControlShell &&
@@ -1839,6 +1847,41 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
   const draftProjectId = useZCodeSessionStore(
     (state) => state.getWorkspaceState(workspaceAbsPath, workspaceIdentity).draftProjectId ?? null,
   );
+  const handleVerificationAgentRequest = useCallback(async (prompt: string, source: "knowledge" | "tools" = "knowledge") => {
+    if (!workspaceAbsPath || workspaceReadOnlyReason) {
+      throw new Error(workspaceReadOnlyReason || "Select a local workspace");
+    }
+    const selection = (await services.modelSelectionService.getView()).preferredSelection;
+    if (!selection) {
+      if (source === "tools") {
+        throw new Error(locale.startsWith("zh") ? "请在设置中选择模型，然后再提交工具需求。" : "Select a model in Settings, then submit your tool request.");
+      }
+      throw new Error(locale.startsWith("zh")
+        ? "原件和索引已保存。请在设置中选择模型，再点击「继续模型归档」。"
+        : "The PDF and index are saved. Select a model in Settings, then choose File with Agent.");
+    }
+    const lease = acquireWorkspaceConnection(
+      { workspacePath: workspaceAbsPath, workspaceIdentity: workspaceIdentity ?? undefined },
+      services.zcodeAgentService,
+    );
+    try {
+      const ack = await lease.transport.sendCommand(createCommandEnvelope({
+        type: "createSession",
+        sessionId: null,
+        payload: {
+          workspaceId: workspaceIdentity?.trim() || workspaceAbsPath,
+          firstInput: { text: prompt, modelSelection: selection },
+        },
+      }), { projectId: draftProjectId });
+      if (ack.status !== "accepted" || ack.result?.type !== "createSession") {
+        throw new Error(ack.message || ack.reasonCode || ack.status);
+      }
+      handleSelectTaskInChat(workspaceAbsPath, ack.result.sessionId, workspaceIdentity);
+    } finally {
+      lease.release();
+    }
+  }, [draftProjectId, handleSelectTaskInChat, locale, services.modelSelectionService, services.zcodeAgentService,
+    workspaceAbsPath, workspaceIdentity, workspaceReadOnlyReason]);
   // worktree 复选框只对本地桌面的 Git 项目草稿开放（docs/git/worktree.md §3.1）。
   const worktreeEligible =
     activeWorkspacePurpose === "project" &&
@@ -2940,11 +2983,38 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                           active={showVerification}
                           workspace={workspaceAbsPath}
                           onToggle={() => onWorkspaceMainViewChange(showVerification ? "chat" : "verification")}
+                          toolsActive={showVerificationTools}
+                          onToolsToggle={() => onWorkspaceMainViewChange(showVerificationTools ? "chat" : "verification-tools")}
+                          fsdbActive={showFsdb}
+                          onFsdbToggle={() => onWorkspaceMainViewChange(showFsdb ? "chat" : "fsdb-wave")}
+                          designActive={showDesignQuery}
+                          onDesignToggle={() => onWorkspaceMainViewChange(showDesignQuery ? "chat" : "design-query")}
+                          knowledgeActive={showKnowledge}
+                          onKnowledgeToggle={() => onWorkspaceMainViewChange(showKnowledge ? "chat" : "knowledge-base")}
                         />
                       ) : null}
                       <div className="min-h-0 flex-1 overflow-hidden">
-                        {showVerification && workspaceAbsPath ? (
-                          <VerificationWorkbench key={workspaceAbsPath} workspace={workspaceAbsPath} />
+                        {showVerificationTools && workspaceAbsPath ? (
+                          <VerificationToolCatalog key={workspaceAbsPath} workspace={workspaceAbsPath}
+                            startAgent={(prompt) => handleVerificationAgentRequest(prompt, "tools")}
+                            onOpen={(id) => {
+                              if (id === "fsdb") setFsdbArtifact(undefined);
+                              onWorkspaceMainViewChange(({ rtl: "design-query", fsdb: "fsdb-wave", coverage: "coverage-data" } as const)[id]);
+                            }} />
+                        ) : showCoverage && workspaceAbsPath ? (
+                          <CoveragePanel key={workspaceAbsPath} workspace={workspaceAbsPath} returnToTools onClose={() => onWorkspaceMainViewChange("verification-tools")} />
+                        ) : showFsdb && workspaceAbsPath ? (
+                          <FsdbPanel key={workspaceAbsPath} workspace={workspaceAbsPath}
+                            initialPath={fsdbArtifact?.workspace === workspaceAbsPath ? fsdbArtifact.path : undefined} />
+                        ) : showDesignQuery && workspaceAbsPath ? (
+                          <DesignQueryPanel key={workspaceAbsPath} workspace={workspaceAbsPath} />
+                        ) : showKnowledge ? (
+                          <KnowledgeLibrary startArchive={handleVerificationAgentRequest} />
+                        ) : showVerification && workspaceAbsPath ? (
+                          <VerificationWorkbench key={workspaceAbsPath} workspace={workspaceAbsPath} onOpenFsdb={(path) => {
+                            setFsdbArtifact({ workspace: workspaceAbsPath, path });
+                            onWorkspaceMainViewChange("fsdb-wave");
+                          }} />
                         ) : workspaceMainView === "automations" && !isWebRemoteControlShell ? (
                           <main
                             id={AUTOMATIONS_TOAST_ANCHOR_ID}

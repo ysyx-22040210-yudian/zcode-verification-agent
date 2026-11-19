@@ -214,7 +214,7 @@ export interface GitChangeSummary {
   removed: number;
 }
 
-export type WorkspaceMainView = "chat" | "automations" | "plugin-store" | "verification";
+export type WorkspaceMainView = "chat" | "automations" | "plugin-store" | "verification" | "knowledge-base" | "design-query" | "fsdb-wave" | "coverage-data" | "verification-tools";
 
 export interface WorkspaceShellLayoutProps extends Omit<AppProps, "baseFeedbackService"> {
   workspaceReadOnlyReason?: string;

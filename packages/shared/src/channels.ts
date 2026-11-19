@@ -400,6 +400,7 @@ export const PlatformChannels = {
   OpenInFileManager: "zcode:open-in-file-manager",
   /** Renderer → Main：使用系统默认应用打开本地文件 */
   OpenExternalFile: "zcode:open-external-file",
+  OpenFsdbWaveform: "zcode:open-fsdb-waveform",
   /** Renderer → Main：打开 ZCode Computer Use 权限引导 */
   OpenCuaPermissionOnboarding: "zcode:open-cua-permission-onboarding",
   /** Renderer → Main：取消当前 renderer 发起的一次权限引导 participant */
@@ -1158,6 +1159,10 @@ export interface PlatformChannelMap {
   [PlatformChannels.OpenInFileManager]: {
     request: string;
     response: { success: boolean; error?: string };
+  };
+  [PlatformChannels.OpenFsdbWaveform]: {
+    request: { workspace: string; jobId: string };
+    response: void;
   };
   [PlatformChannels.OpenExternalFile]: {
     request: string;

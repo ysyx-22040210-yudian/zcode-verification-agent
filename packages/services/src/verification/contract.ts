@@ -1,3 +1,4 @@
+import type { KnowledgeArchiveProgress, KnowledgeSelection } from "./knowledgeFilingContract.js";
 import { createServiceDescriptor } from "../descriptors.js";
 
 export type VerificationVariant = "normal" | "mutant";
@@ -9,6 +10,9 @@ export type VerificationStatus =
 export interface VerificationProfile {
   readonly mode: "sv" | "uvm" | "formal";
   readonly top: string;
+  readonly backend?: string;
+  readonly strategy?: "prove" | "bmc";
+  readonly depth?: number;
   readonly mutant?: boolean;
   readonly test?: string;
 }
@@ -25,7 +29,8 @@ export interface VerificationRun {
   readonly profile: VerificationProfile;
   readonly variant: VerificationVariant;
   readonly seed: number;
-  readonly engine: "VCS" | "IFV";
+  readonly engine: string;
+  readonly toolVersions?: Readonly<Record<string, string>>;
   readonly status: VerificationStatus;
   readonly createdAt: string;
   readonly inputDigest: string;
@@ -47,6 +52,7 @@ export interface VerificationRun {
     readonly status: string;
     readonly depth?: number;
     readonly toolStatus?: string;
+    readonly trace?: string;
   }>;
 }
 
@@ -81,6 +87,64 @@ export interface VerificationArtifactPage {
   readonly nextOffset: number | null;
 }
 
+export interface KnowledgeSource {
+  readonly id: string;
+  readonly title: string;
+  readonly version: string;
+  readonly filename: string;
+  readonly pageCount: number;
+  readonly sha256: string;
+  readonly pdfBytes: number;
+  readonly textCharacters: number;
+  readonly emptyPages: readonly number[];
+  readonly chapters: ReadonlyArray<{ readonly title: string; readonly page: number }>;
+  readonly archive?: KnowledgeArchiveProgress;
+}
+
+export interface KnowledgeSearchRequest {
+  readonly query: string;
+  readonly sourceId?: string;
+  readonly sha256?: string;
+  readonly limit?: number;
+}
+
+export interface KnowledgeSearchResult {
+  readonly query: string;
+  readonly terms: readonly string[];
+  readonly total: number;
+  readonly results: ReadonlyArray<{
+    readonly sourceId: string;
+    readonly title: string;
+    readonly version: string;
+    readonly sha256: string;
+    readonly page: number;
+    readonly pageLabel: string;
+    readonly section: string;
+    readonly excerpt: string;
+    readonly origin?: "model_guide" | "page_text";
+  }>;
+}
+
+export interface KnowledgeReadRequest extends KnowledgeSelection {
+  readonly page: number;
+  readonly count?: number;
+}
+
+export interface KnowledgeReadResult {
+  readonly source: KnowledgeSource;
+  readonly pages: ReadonlyArray<{
+    readonly page: number;
+    readonly pageLabel: string;
+    readonly section: string;
+    readonly text: string;
+  }>;
+}
+
+export interface KnowledgePdfRangeRequest extends KnowledgeSelection {
+  readonly offset: number;
+  readonly length: number;
+}
+
 export interface IVerificationService {
   available(): Promise<boolean>;
   inspect(workspace: string): Promise<VerificationSnapshot>;
@@ -89,6 +153,13 @@ export interface IVerificationService {
   rerun(workspace: string, runId: string): Promise<VerificationRun>;
   readArtifact(workspace: string, runId: string, name: string, offset: number): Promise<VerificationArtifactPage>;
   advance(workspace: string): Promise<VerificationSnapshot>;
+  listKnowledge(): Promise<readonly KnowledgeSource[]>;
+  searchKnowledge(request: KnowledgeSearchRequest): Promise<KnowledgeSearchResult>;
+  readKnowledge(request: KnowledgeReadRequest): Promise<KnowledgeReadResult>;
+  readKnowledgePdf(request: KnowledgePdfRangeRequest): Promise<{ readonly base64: string }>;
 }
 
 export const IVerificationService = createServiceDescriptor<IVerificationService>("verification");
+export { IDesignQueryService } from "./designQueryContract.js";
+export { IKnowledgeFilingService } from "./knowledgeFilingContract.js";
+export type { KnowledgeArchiveProgress, KnowledgeGuide, KnowledgeImportReceipt, KnowledgeSelection } from "./knowledgeFilingContract.js";

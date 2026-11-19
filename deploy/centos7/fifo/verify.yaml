@@ -11,6 +11,8 @@ inputs:
   - uvm/fifo_uvm.sv
   - formal/fifo_formal.sv
   - formal/ifv.tcl
+  - formal-open.f
+  - formal/fifo_open.sv
 profiles:
   sv:
     mode: sv
@@ -25,6 +27,20 @@ profiles:
     coverage: true
   formal:
     mode: formal
+    backend: yosys
+    top: fifo_open
+    filelist: formal-open.f
+    depth: 16
+    strategy: prove
+    mutant: true
+    properties:
+      p_simultaneous_hold: assert
+      p_count_range: assert
+      c_simultaneous: cover
+  formal-ifv:
+    mode: formal
+    backend: ifv
+    optional: true
     top: fifo_formal
     filelist: formal.f
     script: formal/ifv.tcl
@@ -42,13 +58,13 @@ checks:
     profiles: [sv, uvm]
   - id: FIFO-BOUNDS
     title: Occupancy stays between zero and four
-    profiles: [uvm, formal]
+    profiles: [uvm, formal, formal-ifv]
     property: p_count_range
   - id: FIFO-SIMULTANEOUS
     title: Simultaneous accepted operations preserve occupancy
-    profiles: [uvm, formal]
+    profiles: [uvm, formal, formal-ifv]
     property: p_simultaneous_hold
   - id: FIFO-REACH
     title: Simultaneous accepted operations are reachable
-    profiles: [uvm, formal]
+    profiles: [uvm, formal, formal-ifv]
     property: c_simultaneous

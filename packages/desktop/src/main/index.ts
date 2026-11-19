@@ -53,7 +53,8 @@ import {
 } from "electron";
 import { randomUUID } from "node:crypto";
 import type { UtilityProcess as ElectronUtilityProcess } from "electron";
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
+import { promisify } from "node:util";
 import { join, resolve } from "node:path";
 import { homedir, hostname } from "node:os";
 import {
@@ -2323,6 +2324,20 @@ app.whenReady().then(async () => {
     // 读取失败不影响启动，使用默认 homedir
   }
 
+  if (app.isPackaged && !process.env.ZCODE_VERIFICATION_SOCKET && process.arch === "x64"
+      && (process.platform === "win32" || process.platform === "linux")) {
+    const kit = join(process.resourcesPath, "verification-formal");
+    const python = join(kit, "formal-toolchain", "python",
+      process.platform === "win32" ? "python.exe" : "bin/python3.11");
+    try {
+      const { stdout } = await promisify(execFile)(python, ["-E", "-s", "-X", "utf8", join(kit, "portable.py"), "activate"],
+        { windowsHide: true, timeout: 20_000 });
+      const { endpoint } = JSON.parse(stdout) as { endpoint: string };
+      process.env.ZCODE_VERIFICATION_SOCKET = endpoint;
+    } catch (error) {
+      logger.warn("[verification] could not start the bundled Formal service", error);
+    }
+  }
   // scheduler 也会打开 tasks-index；等 Host 完成统一准备，避免在启动页出现前抢先迁移。
   configureDatabaseStartupQuit(() => {
     markExplicitQuit("database-startup-exit");

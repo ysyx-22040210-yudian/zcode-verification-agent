@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>FSDB · Waveform</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #13171d;
+        --panel: #1a2028;
+        --edge: #313a46;
+        --text: #e4eaf1;
+        --muted: #a0aab7;
+        --grid: #323b46;
+        --wave: #66d8bf;
+        --bus: #a2b9fa;
+        --x: #ff97ad;
+        --z: #efc477;
+        --cursor: #ffce6e;
+        --names: clamp(180px, 26vw, 370px);
+        font:
+          14px system-ui,
+          sans-serif;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          color-scheme: light;
+          --bg: #f8fafc;
+          --panel: #eef2f5;
+          --edge: #c5ced8;
+          --text: #18232d;
+          --muted: #4d5b69;
+          --grid: #d6dde4;
+          --wave: #08745e;
+          --bus: #354fb1;
+          --x: #ad294f;
+          --z: #865500;
+          --cursor: #9a6100;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--edge);
+        background: var(--panel);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 6px 14px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 650;
+      }
+      #file {
+        color: var(--muted);
+        overflow-wrap: anywhere;
+        font:
+          12px ui-monospace,
+          monospace;
+      }
+      nav {
+        padding: 10px 16px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+      }
+      button,
+      input,
+      select {
+        background: var(--panel);
+        color: var(--text);
+        border: 1px solid var(--edge);
+        border-radius: 5px;
+        padding: 5px 9px;
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover,
+      button:focus-visible {
+        border-color: var(--wave);
+      }
+      label {
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      input {
+        width: 14ch;
+        font-family: ui-monospace, monospace;
+      }
+      #unit {
+        margin-inline-start: auto;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      main {
+        overflow: auto;
+        flex: 1;
+        min-height: 150px;
+      }
+      .rows {
+        min-width: 580px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: var(--names) minmax(300px, 1fr);
+        border-bottom: 1px solid var(--edge);
+      }
+      .info {
+        padding: 6px 12px;
+        border-inline-end: 1px solid var(--edge);
+        background: var(--panel);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 3px;
+        min-width: 0;
+      }
+      .name,
+      .val {
+        font:
+          13px ui-monospace,
+          monospace;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+      .val,
+      .meta {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .track {
+        width: 100%;
+        height: var(--row-height, 54px);
+        display: block;
+        cursor: crosshair;
+        touch-action: none;
+      }
+      .axis .track {
+        height: 32px;
+      }
+      .axis .info {
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .grid {
+        stroke: var(--grid);
+        stroke-width: 1;
+        stroke-dasharray: 2 4;
+      }
+      .cursor {
+        stroke: var(--cursor);
+        stroke-width: 1.5;
+      }
+      .trigger {
+        stroke: var(--bus);
+        stroke-dasharray: 4 3;
+      }
+      .w {
+        fill: none;
+        stroke: var(--wave);
+        stroke-width: 1.7;
+        stroke-linejoin: round;
+      }
+      .b {
+        stroke: var(--bus);
+      }
+      .x {
+        stroke: var(--x);
+      }
+      .z {
+        stroke: var(--z);
+        stroke-dasharray: 4 2;
+      }
+      .na {
+        stroke: var(--muted);
+        stroke-dasharray: 2 4;
+      }
+      .fillna {
+        fill: var(--edge);
+        opacity: 0.65;
+      }
+      .label {
+        fill: var(--text);
+        font:
+          11px ui-monospace,
+          monospace;
+      }
+      .axistext {
+        fill: var(--muted);
+        font:
+          11px ui-monospace,
+          monospace;
+      }
+      footer {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 9px 16px;
+        color: var(--muted);
+        background: var(--panel);
+        font:
+          12px ui-monospace,
+          monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1 id="title"></h1>
+      <span id="file"></span>
+    </header>
+    <nav>
+      <button id="prev">←</button><button id="minus">−</button
+      ><button id="plus" data-testid="wave-zoom-in">+</button><button id="next">→</button
+      ><button id="fit" data-testid="wave-fit"></button
+      ><label
+        ><span id="cursor-label"></span
+        ><input id="cursor" data-testid="wave-cursor" inputmode="numeric" /></label
+      ><label
+        ><span id="radix-label"></span
+        ><select id="radix">
+          <option>HEX</option>
+          <option>BIN</option>
+        </select></label
+      ><span id="unit"></span>
+    </nav>
+    <main><div class="rows" id="rows"></div></main>
+    <footer><span id="range"></span><span id="notice"></span></footer>
+    <script type="application/json" id="wave-data">
+      __FSDB_SAMPLES__
+    </script>
+    <script>
+      "use strict";
+      const model = JSON.parse(document.getElementById("wave-data").textContent);
+      const $ = (id) => document.getElementById(id),
+        zh = navigator.language.toLowerCase().startsWith("zh");
+      const tr = (cn, en) => (zh ? cn : en);
+      document.documentElement.lang = zh ? "zh-CN" : "en";
+      const title = tr("FSDB 波形", "FSDB waveform");
+      $("title").textContent = title;
+      document.title = title + " · " + model.file.split("/").pop();
+      $("file").textContent = model.file;
+      $("fit").textContent = tr("显示全部", "Fit");
+      $("cursor-label").textContent = tr("游标", "Cursor");
+      $("radix-label").textContent = tr("进制", "Radix");
+      for (const [id, text] of [
+        ["prev", tr("向前平移", "Pan earlier")],
+        ["next", tr("向后平移", "Pan later")],
+        ["minus", tr("缩小", "Zoom out")],
+        ["plus", tr("放大", "Zoom in")],
+      ]) {
+        $(id).title = text;
+        $(id).setAttribute("aria-label", text);
+      }
+      $("unit").textContent = "1 tick = " + model.scale;
+      const low = BigInt(model.start),
+        high = BigInt(model.end),
+        trigger = model.triggerTime === undefined ? null : BigInt(model.triggerTime);
+      let left = low,
+        right = high,
+        cursor = trigger === null ? low : trigger;
+      const min = (a, b) => (a < b ? a : b),
+        max = (a, b) => (a > b ? a : b),
+        clamp = (n, a, b) => max(a, min(b, n));
+      const ns = "http://www.w3.org/2000/svg";
+      function html(tag, cls, text) {
+        const n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text !== undefined) n.textContent = text;
+        return n;
+      }
+      function shape(tag, attrs, text) {
+        const n = document.createElementNS(ns, tag);
+        Object.entries(attrs).forEach(([k, v]) => n.setAttribute(k, String(v)));
+        if (text !== undefined) n.textContent = text;
+        return n;
+      }
+      function asText(value, lane) {
+        if (value === null) return "—";
+        if ($("radix").value === "HEX" && lane.kind === "digital" && lane.width > 1 && /^[01]+$/.test(value))
+          return (
+            "0x" +
+            BigInt("0b" + value)
+              .toString(16)
+              .toUpperCase()
+              .padStart(Math.ceil(lane.width / 4), "0")
+          );
+        return String(value);
+      }
+      const lanes = model.lanes.map((l) => ({
+        ...l,
+        changes: l.changes.map(([t, v]) => [BigInt(t), v]),
+        cut: l.omittedAt == null ? null : BigInt(l.omittedAt),
+      }));
+      function firstAfter(events, t) {
+        let a = 0,
+          b = events.length;
+        while (a < b) {
+          const m = (a + b) >> 1;
+          if (events[m][0] <= t) a = m + 1;
+          else b = m;
+        }
+        return a;
+      }
+      function at(l, t) {
+        if (l.status !== "ok" || (l.cut !== null && t >= l.cut)) return null;
+        const i = firstAfter(l.changes, t);
+        return i ? l.changes[i - 1][1] : l.initial;
+      }
+      function setRange(a, span) {
+        span = clamp(span, 0n, high - low);
+        left = clamp(a, low, high - span);
+        right = left + span;
+        cursor = clamp(cursor, left, right);
+        draw();
+      }
+      function zoom(divide) {
+        const old = right - left,
+          span = divide ? max(1n, old / 2n) : max(1n, old * 2n);
+        const offset = old ? ((cursor - left) * span) / old : 0n;
+        setRange(cursor - offset, span);
+      }
+      function move(dir) {
+        const span = right - left;
+        setRange(left + dir * max(1n, span / 2n), span);
+      }
+      $("plus").onclick = () => zoom(true);
+      $("minus").onclick = () => zoom(false);
+      $("prev").onclick = () => move(-1n);
+      $("next").onclick = () => move(1n);
+      $("fit").onclick = () => setRange(low, high - low);
+      $("radix").onchange = () => draw();
+      function readCursor() {
+        if (!/^\d{1,20}$/.test($("cursor").value)) {
+          draw();
+          return;
+        }
+        cursor = clamp(BigInt($("cursor").value), left, right);
+        draw();
+      }
+      $("cursor").onchange = readCursor;
+      $("cursor").onkeydown = (e) => {
+        if (e.key === "Enter") readCursor();
+      };
+      function addRow(name, lane) {
+        const row = html("div", "row" + (lane ? "" : " axis")),
+          info = html("div", "info"),
+          label = html("span", "name", name);
+        label.title = name;
+        info.append(label);
+        const val = html("span", "val");
+        if (lane) {
+          row.dataset.signal = lane.name;
+          val.dataset.value = "";
+          info.append(val);
+        }
+        const svg = shape("svg", { class: "track", role: "img", "aria-label": name });
+        svg.onpointerdown = (e) => {
+          const box = svg.getBoundingClientRect(),
+            p = Math.max(0, Math.min(1, (e.clientX - box.left) / box.width));
+          cursor = left + ((right - left) * BigInt(Math.round(p * 1000000))) / 1000000n;
+          draw();
+        };
+        row.append(info, svg);
+        $("rows").append(row);
+        return { svg, val, lane };
+      }
+      const tracks = [
+        addRow(tr("信号 / 游标值", "Signal / cursor value"), null),
+        ...lanes.map((l) => addRow(l.name, l)),
+      ];
+      function draw() {
+        const used = ["header", "nav", "footer"].reduce(
+          (n, tag) => n + document.querySelector(tag).offsetHeight,
+          33,
+        );
+        document.documentElement.style.setProperty(
+          "--row-height",
+          Math.max(42, Math.floor((window.innerHeight - used) / Math.max(1, lanes.length)) - 1) + "px",
+        );
+        const span = right - left,
+          w = Math.max(20, tracks[0].svg.clientWidth);
+        const target = BigInt(Math.max(2, Math.min(10, Math.floor(w / 105))));
+        const raw = max(1n, (span + target - 1n) / target),
+          power = 10n ** BigInt(String(raw).length - 1);
+        const step = [1n, 2n, 5n, 10n].map((n) => n * power).find((n) => n >= raw);
+        const ticks = [];
+        for (let t = ((left + step - 1n) / step) * step; t <= right; t += step) ticks.push(t);
+        if (!ticks.length) ticks.push(left);
+        const x = (t) => (span ? (Number(((t - left) * 1000000n) / span) * w) / 1000000 : 0);
+        for (const { svg, val, lane: l } of tracks) {
+          const h = svg.clientHeight || 40,
+            mid = h / 2,
+            amplitude = Math.min(45, Math.max(8, h * 0.18)),
+            hi = mid - amplitude,
+            lo = mid + amplitude;
+          const out = document.createDocumentFragment();
+          const segment = (a, b, c, klass) =>
+            out.append(shape("line", { x1: a, x2: a, y1: b, y2: c, class: klass }));
+          for (const t of ticks) {
+            const atX = x(t);
+            segment(atX, 0, h, "grid");
+            if (!l)
+              out.append(
+                shape(
+                  "text",
+                  {
+                    x: Math.min(w - 2, Math.max(2, atX)),
+                    y: h - 9,
+                    "text-anchor": atX < 40 ? "start" : atX > w - 40 ? "end" : "middle",
+                    class: "axistext",
+                  },
+                  String(t),
+                ),
+              );
+          }
+          if (l) {
+            const current = at(l, cursor);
+            val.textContent = l.status === "ok" ? asText(current, l) : l.status;
+            val.title = val.textContent;
+            const stop = l.cut === null ? right : min(right, max(left, l.cut)),
+              paths = {};
+            function line(cls, d) {
+              paths[cls] = (paths[cls] || "") + d;
+            }
+            function band(a, b, v) {
+              let x1 = x(a),
+                x2 = x(b);
+              if (!span) x2 = w;
+              if (v === null) {
+                line("na", "M" + x1 + " " + mid + "H" + x2);
+                return;
+              }
+              if (l.kind === "digital" && l.width === 1) {
+                const y = v === "1" ? hi : v === "0" ? lo : mid,
+                  c = v === "x" ? "x" : v === "z" ? "z" : "";
+                line(c, "M" + x1 + " " + y + "H" + x2);
+                if (c && x2 - x1 > 18)
+                  out.append(shape("text", { x: x1 + 4, y: mid - 3, class: "label" }, v));
+              } else {
+                const cap = Math.min(4, (x2 - x1) / 2);
+                line(
+                  "b",
+                  "M" +
+                    x1 +
+                    " " +
+                    mid +
+                    "L" +
+                    (x1 + cap) +
+                    " " +
+                    hi +
+                    "H" +
+                    (x2 - cap) +
+                    "L" +
+                    x2 +
+                    " " +
+                    mid +
+                    "L" +
+                    (x2 - cap) +
+                    " " +
+                    lo +
+                    "H" +
+                    (x1 + cap) +
+                    "Z",
+                );
+                const label = asText(v, l);
+                if (x2 - x1 > label.length * 7 + 12)
+                  out.append(shape("text", { x: x1 + 7, y: mid + 4, class: "label" }, label));
+              }
+            }
+            let t = left,
+              value = at(l, left);
+            for (let i = firstAfter(l.changes, left); i < l.changes.length; i++) {
+              const [time, next] = l.changes[i];
+              if (time > stop) break;
+              band(t, time, value);
+              if (l.kind === "digital" && l.width === 1 && next !== value) {
+                const level = (v) => (v === "1" ? hi : v === "0" ? lo : mid);
+                line("", "M" + x(time) + " " + level(value) + "V" + level(next));
+              }
+              t = time;
+              value = next;
+            }
+            band(t, stop, value);
+            for (const [klass, d] of Object.entries(paths))
+              out.append(shape("path", { d, class: "w " + klass }));
+            if (l.cut !== null && l.cut <= right) {
+              const a = x(max(l.cut, left));
+              out.append(
+                shape("rect", { x: a, y: 0, width: Math.max(1, w - a), height: h, class: "fillna" }),
+              );
+            }
+          }
+          if (trigger !== null && trigger >= left && trigger <= right) segment(x(trigger), 0, h, "trigger");
+          segment(Math.min(w - 1, x(cursor) + 0.5), 0, h, "cursor");
+          svg.replaceChildren(out);
+        }
+        $("cursor").value = String(cursor);
+        $("range").textContent =
+          String(left) +
+          " – " +
+          String(right) +
+          " ticks" +
+          (trigger === null ? "" : "  ·  " + tr("触发", "Trigger") + " " + trigger);
+        $("notice").textContent = model.truncated
+          ? tr("灰色区域超出已提取数据", "Shaded area exceeds extracted samples")
+          : lanes.some((l) => l.status !== "ok")
+            ? tr("部分信号无可用记录", "Some signals have no records")
+            : model.id;
+      }
+      window.addEventListener("resize", draw);
+      draw();
+    </script>
+  </body>
+</html>
