@@ -8,9 +8,20 @@ export type UnsupportedModelInputMediaKind = "image input" | "PDF input" | "vide
 
 export function isProviderVisibleModelInputMediaBlock(block: ModelMessageContentBlock): boolean {
   return (
-    block.type === "image" ||
+    isProviderVisibleImageModelInputBlock(block) ||
     isProviderVisiblePdfModelInputBlock(block) ||
     isProviderVisibleVideoModelInputBlock(block)
+  );
+}
+
+export function isProviderVisibleImageModelInputBlock(block: ModelMessageContentBlock): boolean {
+  if (block.type === "image") return true;
+  // MCP 或旧会话可用通用 file 承载图片。适配器优先使用非空提取文本，否则会发送文件字节。
+  return (
+    block.type === "file" &&
+    !block.text &&
+    block.dataUrl !== undefined &&
+    (/^image\//i.test(block.mediaType.trim()) || /^\s*data:\s*image\//i.test(block.dataUrl))
   );
 }
 
@@ -37,7 +48,7 @@ export function getUnsupportedModelInputMediaKind(
   block: ModelMessageContentBlock,
   inputFormat: ModelInputFormat,
 ): UnsupportedModelInputMediaKind | undefined {
-  if (block.type === "image" && !inputFormat.supportsImage) {
+  if (isProviderVisibleImageModelInputBlock(block) && !inputFormat.supportsImage) {
     return "image input";
   }
   if (isProviderVisiblePdfModelInputBlock(block) && !inputFormat.supportsPdf) {

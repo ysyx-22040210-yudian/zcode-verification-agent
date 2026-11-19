@@ -344,6 +344,8 @@ export interface McpConnectOptions {
 }
 
 export interface McpCallToolRequest {
+  /** 本轮实际模型的图片输入能力，只随请求元数据交给工具。 */
+  modelSupportsImage?: boolean;
   serverName: string;
   toolName: string;
   arguments?: Record<string, unknown>;

@@ -1,6 +1,7 @@
 import {
   createUnsupportedModelInputMediaText,
   getUnsupportedModelInputMediaKind,
+  isProviderVisibleImageModelInputBlock,
   isProviderVisibleModelInputMediaBlock,
   isProviderVisiblePdfModelInputBlock,
   isProviderVisibleVideoModelInputBlock,
@@ -77,7 +78,7 @@ export function projectMessagesForInputFormat(
 
       messageChanged = true;
       changed = true;
-      if (block.type === "image") omittedImageCount++;
+      if (isProviderVisibleImageModelInputBlock(block)) omittedImageCount++;
       else if (isProviderVisiblePdfModelInputBlock(block)) omittedPdfCount++;
       else if (isProviderVisibleVideoModelInputBlock(block)) omittedVideoCount++;
       else omittedOtherMediaCount++;

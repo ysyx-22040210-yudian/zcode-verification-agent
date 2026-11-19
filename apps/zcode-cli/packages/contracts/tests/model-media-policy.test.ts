@@ -24,6 +24,27 @@ describe("model input media policy", () => {
     );
   });
 
+  it("gates image bytes in generic file blocks, including attachments with a generic MIME type", () => {
+    const input = createInputFormat({ supportsImage: false });
+    const file = {
+      type: "file" as const,
+      name: "wave.png",
+      mediaType: "application/octet-stream",
+      dataUrl: "data:image/png;base64,d2F2ZQ==",
+    };
+    for (const block of [
+      file,
+      { ...file, mediaType: "IMAGE/PNG; charset=binary" },
+      { ...file, dataUrl: "DATA: image/png;base64,d2F2ZQ==" },
+    ]) {
+      expect(isProviderVisibleModelInputMediaBlock(block)).toBe(true);
+      expect(getUnsupportedModelInputMediaKind(block, input)).toBe("image input");
+      expect(getUnsupportedModelInputMediaKind(block, createInputFormat())).toBeUndefined();
+      expect(createUnsupportedModelInputMediaText(block, "image input")).not.toContain("d2F2ZQ==");
+      expect(getUnsupportedModelInputMediaKind({ ...block, text: "clock edge" }, input)).toBeUndefined();
+    }
+  });
+
   it("treats PDF file data as media only when extracted text is missing or empty", () => {
     const pdfWithText = {
       type: "file" as const,

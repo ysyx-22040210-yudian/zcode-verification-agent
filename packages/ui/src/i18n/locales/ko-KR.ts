@@ -4729,7 +4729,7 @@ const koKR: Record<string, string> = {
   "settings.modelProvider.help.maxOutputTokens":
     "단일 모델 요청이 생성할 수 있는 최대 토큰 수입니다.\n모델의 실제 한도를 초과하지 마세요.",
   "settings.modelProvider.help.inputModalities":
-    "모델이 받을 수 있는 콘텐츠 유형을 설정합니다.\n\n- **텍스트**: 텍스트 콘텐츠를 받습니다. 필수입니다.\n- **이미지**: 이미지 콘텐츠를 받습니다.\n- **동영상**: 동영상 콘텐츠를 받습니다.\n- **PDF**: PDF 문서를 직접 받습니다.",
+    "모델이 받을 수 있는 콘텐츠 유형을 설정합니다.\n\n- **텍스트**: 텍스트 콘텐츠를 받습니다. 필수입니다.\n- **이미지(비전 모델)**: 첨부 이미지와 도구가 반환한 이미지를 모델에 보냅니다. 끄면 이후 요청에서 텍스트는 유지하고 대화 기록을 포함한 이미지는 제외합니다.\n- **동영상**: 동영상 콘텐츠를 받습니다.\n- **PDF**: PDF 문서를 직접 받습니다.",
   "settings.modelProvider.help.outputModalities":
     "모델 응답의 콘텐츠 유형입니다. 현재는 텍스트만 지원합니다.",
   "settings.modelProvider.help.capabilities":
@@ -4780,7 +4780,7 @@ const koKR: Record<string, string> = {
   "settings.modelProvider.inputModalities": "입력 유형",
   "settings.modelProvider.outputModalities": "출력 유형",
   "settings.modelProvider.modality.text": "텍스트",
-  "settings.modelProvider.modality.image": "이미지",
+  "settings.modelProvider.modality.image": "이미지(비전 모델)",
   "settings.modelProvider.modality.video": "동영상",
   "settings.modelProvider.modality.audio": "오디오",
   "settings.modelProvider.modality.pdf": "PDF",

@@ -4751,7 +4751,7 @@ const zhCN: Record<string, string> = {
   "settings.modelProvider.help.maxOutputTokens":
     "单次模型请求允许生成的最大 Token 数。\n请勿超过模型的实际上限。",
   "settings.modelProvider.help.inputModalities":
-    "设置模型能够接收的内容类型：\n\n- **文本**：接收文本内容，为必选项。\n- **图片**：接收图片内容。\n- **视频**：接收视频内容。\n- **PDF**：直接接收 PDF 文档。",
+    "设置模型能够接收的内容类型：\n\n- **文本**：接收文本内容，为必选项。\n- **图片（视觉模型）**：开启后，Agent 可以发送图片附件和工具返回的图片。关闭后，后续请求只保留这些内容的文字，历史图片也会被跳过。\n- **视频**：接收视频内容。\n- **PDF**：直接接收 PDF 文档。",
   "settings.modelProvider.help.outputModalities":
     "模型生成回复的内容类型。目前不支持文本以外的其他选项。",
   "settings.modelProvider.help.capabilities":
@@ -4799,7 +4799,7 @@ const zhCN: Record<string, string> = {
   "settings.modelProvider.inputModalities": "输入类型",
   "settings.modelProvider.outputModalities": "输出类型",
   "settings.modelProvider.modality.text": "文本",
-  "settings.modelProvider.modality.image": "图片",
+  "settings.modelProvider.modality.image": "图片（视觉模型）",
   "settings.modelProvider.modality.video": "视频",
   "settings.modelProvider.modality.audio": "音频",
   "settings.modelProvider.modality.pdf": "PDF",

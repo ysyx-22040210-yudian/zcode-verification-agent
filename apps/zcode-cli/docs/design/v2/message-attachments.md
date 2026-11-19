@@ -11,6 +11,12 @@
 - session store 已有 `FilePart`，`persistUserPrompt()` 也会把附件落成 `file` part，但 resume 时 `session-history-hydrator` 只把 file part 恢复成 `[Attached file: ...]` 文本。
 - ZCode app-server spec 明确拒绝 embedded resources、images、audio，直到 runtime attachments 有稳定 schema。
 
+## 按当前模型发送图片
+
+模型编辑器的「高级配置 → 输入类型 → 图片（视觉模型）」控制对应供应商与模型的 `properties.inputFormat.supportsImage`。每次请求都按本轮执行模型处理聊天附件、工具结果和会话历史。关闭图片输入时保留正文、文件名和文字引用，去掉图片字节。开启后可随对话上下文使用先前保留的附件。
+
+MCP 工具在本次调用的 `_meta["com.zcode/request-context"].model_supports_image` 中读取这个布尔值。验证 Agent 的知识库在值为 `true` 时才渲染原页图片并发出视觉证据回执。缺少该值时仍可从原始 PDF 提取排版文本和页码。
+
 ## 当前实现状态
 
 Status as of 2026-05-08: 图片输入主线已经落地，文件/资源/大媒体仍是分阶段能力。

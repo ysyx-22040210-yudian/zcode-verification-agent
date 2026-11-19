@@ -4848,7 +4848,7 @@ const jaJP: Record<string, string> = {
   "settings.modelProvider.help.maxOutputTokens":
     "1 回のモデルリクエストで生成できるトークンの最大数です。\nモデルの実際の上限を超えないようにしてください。",
   "settings.modelProvider.help.inputModalities":
-    "モデルが受け取れるコンテンツの種類を設定します:\n\n- **テキスト**: テキストを受け取ります。必須です。\n- **画像**: 画像を受け取ります。\n- **動画**: 動画を受け取ります。\n- **PDF**: PDF ドキュメントを直接受け取ります。",
+    "モデルが受け取れるコンテンツの種類を設定します:\n\n- **テキスト**: テキストを受け取ります。必須です。\n- **画像（視覚モデル）**: 添付画像とツールが返す画像をモデルに送ります。オフの場合、以降のリクエストではテキストを保持し、履歴を含む画像を省きます。\n- **動画**: 動画を受け取ります。\n- **PDF**: PDF ドキュメントを直接受け取ります。",
   "settings.modelProvider.help.outputModalities":
     "モデルの応答のコンテンツの種類です。現在はテキストのみサポートしています。",
   "settings.modelProvider.help.capabilities":
@@ -4899,7 +4899,7 @@ const jaJP: Record<string, string> = {
   "settings.modelProvider.inputModalities": "入力タイプ",
   "settings.modelProvider.outputModalities": "出力タイプ",
   "settings.modelProvider.modality.text": "テキスト",
-  "settings.modelProvider.modality.image": "画像",
+  "settings.modelProvider.modality.image": "画像（視覚モデル）",
   "settings.modelProvider.modality.video": "動画",
   "settings.modelProvider.modality.audio": "音声",
   "settings.modelProvider.modality.pdf": "PDF",

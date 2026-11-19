@@ -54,7 +54,7 @@ export async function normalizeMcpToolResultForModel(input: {
     const browserScreenshotArtifact = browserScreenshotIndices.has(index)
       ? await persistBrowserScreenshotArtifact(block, input)
       : undefined;
-    const normalized = await normalizeMcpContentBlockForModel(block, {
+    const normalized = await normalizeMcpContentBlockForModel(embeddedMcpImage(block) ?? block, {
       ...input,
       browserScreenshotArtifact,
     });
@@ -108,6 +108,20 @@ export function hasOfficialCuaFrameAuthority(result: unknown): result is McpTool
       return typeof nextText === "string" && isOfficialCuaImageRefText(nextText);
     },
   );
+}
+
+export function embeddedMcpImage(block: McpContentBlock): McpContentBlock | undefined {
+  if (block.type !== "resource" || !block.resource || typeof block.resource !== "object") return;
+  const { mimeType, blob, uri } = block.resource as Record<string, unknown>;
+  if (typeof mimeType === "string" && /^image\//i.test(mimeType) && typeof blob === "string") {
+    return {
+      type: "image",
+      mimeType,
+      data: blob,
+      ...(typeof uri === "string" && !/^\s*data:/i.test(uri) ? { resourceUri: uri } : {}),
+    };
+  }
+  return undefined;
 }
 
 async function normalizeMcpContentBlockForModel(

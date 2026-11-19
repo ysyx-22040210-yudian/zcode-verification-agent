@@ -3,6 +3,31 @@ import { toAiSdkMessages } from "../src/model/index.js";
 import { createTestInputFormat } from "./test-model-format.js";
 
 describe("AI SDK tool result media projection", () => {
+  it.each(["openai-chat-completions", "anthropic-messages"] as const)(
+    "omits PNG file bytes from replayed user and tool messages with %s",
+    (apiFormat) => {
+      const image = {
+        type: "file" as const,
+        mediaType: "image/png",
+        name: "timing.png",
+        dataUrl: "data:image/png;base64,d2F2ZWZvcm0=",
+      };
+      const messages = [
+        { role: "user" as const, content: [image, { type: "text" as const, text: "find the edge" }] },
+        { role: "tool" as const, toolName: "Read", toolCallId: "read-timing", content: [image] },
+      ];
+      const project = (supportsImage: boolean) =>
+        JSON.stringify(toAiSdkMessages(messages, {
+          apiFormat,
+          providerKind: apiFormat === "anthropic-messages" ? "anthropic" : "openai",
+          inputFormat: createTestInputFormat({ supportsImage }),
+        }));
+      expect(project(false)).not.toContain("d2F2ZWZvcm0=");
+      expect(project(false)).toContain("find the edge");
+      expect(project(true)).toContain("d2F2ZWZvcm0=");
+    },
+  );
+
   it("accepts case-insensitive data URL schemes for image tool results", () => {
     const messages = toAiSdkMessages(
       [

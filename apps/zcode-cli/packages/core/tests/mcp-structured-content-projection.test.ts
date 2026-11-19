@@ -47,6 +47,20 @@ describe("formatMcpToolResult structuredContent projection", () => {
     return registry.get("mcp__modern__structured");
   }
 
+  it("keeps embedded PNG bytes in typed image blocks, outside structured result text", () => {
+    const resource = { uri: "file:///timing.png", mimeType: "image/png", blob: "dGltaW5n" };
+    const result = structuredToolEntry()?.formatModelContent?.({
+      content: [{ type: "resource", resource }],
+      structuredContent: { caption: "posedge", preview: resource },
+    });
+    expect(result).toEqual([
+      expect.objectContaining({ type: "image", dataUrl: "data:image/png;base64,dGltaW5n" }),
+      { type: "text", text: "MCP resource: file:///timing.png" },
+      expect.objectContaining({ type: "text", text: expect.stringContaining("posedge") }),
+    ]);
+    expect(JSON.stringify(result).split("dGltaW5n")).toHaveLength(2);
+  });
+
   it("undefined 值不投影（CUA 成功结果空尾巴修复）", () => {
     const entry = structuredToolEntry();
     expect(

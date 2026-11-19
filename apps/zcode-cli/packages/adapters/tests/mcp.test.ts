@@ -288,6 +288,7 @@ describe("createMcpAdapter", () => {
       arguments: { code: "1 + 1" },
       serverName: "node_repl",
       toolName: "js",
+      modelSupportsImage: false,
       runtimeScope: "subagent",
       trace: {
         parentSpanId: "parent-1",
@@ -304,6 +305,7 @@ describe("createMcpAdapter", () => {
         name: "js",
         _meta: {
           "com.zcode/request-context": {
+            model_supports_image: false,
             parent_span_id: "parent-1",
             runtime_scope: "subagent",
             session_id: "session-1",
@@ -311,6 +313,7 @@ describe("createMcpAdapter", () => {
             trace_id: "trace-1",
             turn_id: "turn-1",
           },
+          model_supports_image: false,
           parent_span_id: "parent-1",
           runtime_scope: "subagent",
           session_id: "session-1",

@@ -5088,7 +5088,7 @@ const enUS: Record<string, string> = {
   "settings.modelProvider.help.maxOutputTokens":
     "The maximum number of tokens a single model request may generate.\nDo not exceed the model's actual limit.",
   "settings.modelProvider.help.inputModalities":
-    "Set the content types the model can receive:\n\n- **Text**: Receives text content. Required.\n- **Images**: Receives image content.\n- **Video**: Receives video content.\n- **PDF**: Receives PDF documents directly.",
+    "Set the content types the model can receive:\n\n- **Text**: Receives text content. Required.\n- **Images (vision model)**: Allows the Agent to send image attachments and tool images. When off, subsequent requests keep their text and omit images, including those in chat history.\n- **Video**: Receives video content.\n- **PDF**: Receives PDF documents directly.",
   "settings.modelProvider.help.outputModalities":
     "The content type of the model's replies. Only text is currently supported.",
   "settings.modelProvider.help.capabilities":
@@ -5138,7 +5138,7 @@ const enUS: Record<string, string> = {
   "settings.modelProvider.inputModalities": "Input types",
   "settings.modelProvider.outputModalities": "Output types",
   "settings.modelProvider.modality.text": "Text",
-  "settings.modelProvider.modality.image": "Image",
+  "settings.modelProvider.modality.image": "Images (vision model)",
   "settings.modelProvider.modality.video": "Video",
   "settings.modelProvider.modality.audio": "Audio",
   "settings.modelProvider.modality.pdf": "PDF",

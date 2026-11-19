@@ -26,6 +26,7 @@ import { createToolRuleNameSet } from "../tool/tool-visibility.js";
 import type { ToolEntry } from "../tool/types.js";
 import {
   asDataUrl,
+  embeddedMcpImage,
   base64PayloadFromMcpImageData,
   normalizeMcpToolResultForModel,
 } from "./image-normalization.js";
@@ -248,6 +249,7 @@ export function createMcpToolEntry(
           serverName: descriptor.serverName,
           toolName: descriptor.toolName,
           arguments: toMcpRuntimeArguments(input, isCuaAppObservation),
+          modelSupportsImage: context.model?.properties.inputFormat.supportsImage === true,
           trace: {
             traceId: context.traceId,
             spanId: context.spanId,
@@ -481,6 +483,9 @@ function formatContentBlock(block: Record<string, unknown>): ModelMessageContent
             sizeBytes: estimateBase64Bytes(block.data),
           },
         },
+        ...(typeof block.resourceUri === "string" && !/^\s*data:/i.test(block.resourceUri)
+          ? [{ type: "text" as const, text: "MCP resource: " + block.resourceUri }]
+          : []),
       ];
     }
     return [{ type: "text", text: `[MCP image content omitted: ${mimeType}]` }];
@@ -490,6 +495,8 @@ function formatContentBlock(block: Record<string, unknown>): ModelMessageContent
     return [{ type: "text", text: `[MCP audio content omitted: ${mimeType}]` }];
   }
   if (block.type === "resource") {
+    const image = embeddedMcpImage(block);
+    if (image) return formatContentBlock(image);
     return [{ type: "text", text: `MCP resource content:\n${stringify(block.resource ?? block)}` }];
   }
   return [{ type: "text", text: stringify(block) }];
@@ -535,9 +542,20 @@ function toMcpRuntimeArguments(
   return runtimeArguments;
 }
 
+// MCP 的 structuredContent 有时重复提供 content 中的图片；序列化成文字会绕过图片能力投影。
+function omitStructuredImageBytes(this: Record<string, unknown>, key: string, value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  if (/^\s*data:\s*image\//i.test(value)) return "[Image data omitted]";
+  const mime = this.mimeType ?? this.mediaType;
+  if ((key === "blob" || key === "data") && typeof mime === "string" && /^image\//i.test(mime.trim())) {
+    return "[Image data omitted]";
+  }
+  return value;
+}
+
 function stringify(value: unknown): string {
   try {
-    return JSON.stringify(value, null, 2) ?? "";
+    return JSON.stringify(value, omitStructuredImageBytes, 2) ?? "";
   } catch {
     return String(value);
   }

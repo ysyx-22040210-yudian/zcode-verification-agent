@@ -71,6 +71,7 @@ export {
   getUnsupportedModelInputMediaKind,
   isFileSystemPortError,
   isCoreError,
+  isProviderVisibleImageModelInputBlock,
   isProviderVisibleModelInputMediaBlock,
   isProviderVisiblePdfModelInputBlock,
   isProviderVisibleVideoModelInputBlock,

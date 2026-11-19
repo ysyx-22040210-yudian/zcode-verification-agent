@@ -1191,7 +1191,11 @@ class NodeMcpAdapter implements McpPort {
         {
           name: request.toolName,
           arguments: request.arguments ?? {},
-          ...(request.trace || request.runtimeScope || request.workspaceKey || request.workspacePath
+          ...(request.trace ||
+          request.runtimeScope ||
+          request.workspaceKey ||
+          request.workspacePath ||
+          request.modelSupportsImage !== undefined
             ? { _meta: mcpRequestMeta(request) }
             : {}),
         },
@@ -2362,6 +2366,9 @@ function mcpRequestMeta(request: McpCallToolRequest): Record<string, unknown> {
   // bridge 则以它们作为回到当前 BrowserControlPort session 的唯一关联依据。runtime_scope
   // 不能从 child session id 猜测，必须由实际执行工具的 runtime 显式透传。
   const requestContext = {
+    ...(request.modelSupportsImage !== undefined
+      ? { model_supports_image: request.modelSupportsImage }
+      : {}),
     ...(request.trace ? { trace_id: request.trace.traceId } : {}),
     ...(request.trace?.spanId ? { span_id: request.trace.spanId } : {}),
     ...(request.trace?.parentSpanId ? { parent_span_id: request.trace.parentSpanId } : {}),

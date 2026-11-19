@@ -1,4 +1,5 @@
 import {
+  isProviderVisibleImageModelInputBlock,
   ModelErrorCode,
   ModelFailureReason,
   ModelProtocolError,
@@ -168,7 +169,7 @@ function validateRequestProperties(properties: ModelProperties, request: ModelRe
   for (const message of request.messages) {
     if (!Array.isArray(message.content)) continue;
     for (const block of message.content) {
-      if (block.type === "image" && !properties.inputFormat.supportsImage) {
+      if (isProviderVisibleImageModelInputBlock(block) && !properties.inputFormat.supportsImage) {
         throw invalidRequest("Model does not support image input");
       }
       if (

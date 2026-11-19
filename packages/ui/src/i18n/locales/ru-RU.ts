@@ -4833,7 +4833,7 @@ const ruRU: Record<string, string> = {
   "settings.modelProvider.help.maxOutputTokens":
     "Максимальное число токенов, которое модель может сгенерировать за один запрос.\nНе превышайте фактический лимит модели.",
   "settings.modelProvider.help.inputModalities":
-    "Укажите типы содержимого, которые модель может принимать:\n\n- **Текст**: принимает текст. Обязательно.\n- **Изображения**: принимает изображения.\n- **Видео**: принимает видео.\n- **PDF**: принимает PDF-документы напрямую.",
+    "Укажите типы содержимого, которые модель может принимать:\n\n- **Текст**: принимает текст. Обязательно.\n- **Изображения**: агент может отправлять изображения из вложений и результатов инструментов. Если выключить, в следующих запросах сохраняется текст, а изображения пропускаются, в том числе из истории чата.\n- **Видео**: принимает видео.\n- **PDF**: принимает PDF-документы напрямую.",
   "settings.modelProvider.help.outputModalities":
     "Тип содержимого ответов модели. Сейчас поддерживается только текст.",
   "settings.modelProvider.help.capabilities":
@@ -4885,7 +4885,7 @@ const ruRU: Record<string, string> = {
   "settings.modelProvider.inputModalities": "Типы ввода",
   "settings.modelProvider.outputModalities": "Типы вывода",
   "settings.modelProvider.modality.text": "Текст",
-  "settings.modelProvider.modality.image": "Изображение",
+  "settings.modelProvider.modality.image": "Изображения (модель с поддержкой зрения)",
   "settings.modelProvider.modality.video": "Видео",
   "settings.modelProvider.modality.audio": "Аудио",
   "settings.modelProvider.modality.pdf": "PDF",
