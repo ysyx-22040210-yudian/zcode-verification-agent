@@ -8,13 +8,53 @@
 
 [验证工作台规格](../../specs/verification-workbench.md) · [上游许可](../../LICENSE) · [第三方声明](../../THIRD-PARTY-NOTICES.md)
 
-## 在已部署的 VM 启动
+## 在另一台 CentOS 7 上直接打开
 
-在 VM 的图形桌面打开终端，以维护账号执行下列命令。
+从 GitHub Release 下载 `zcode-centos7-x86_64.run`，将它复制到目标机器。[CentOS 7 免安装发行版](https://github.com/ysyx-22040210-yudian/zcode-verification-agent/releases/tag/v3.18.2-centos7.1)
+
+在 **CentOS 7 x86-64 图形桌面**的终端进入文件所在目录，运行
 
 ```bash
-su -
-/home/verification-agent/compat/start-zcode.sh /home/verification-agent/fifo
+bash ./zcode-centos7-x86_64.run
+```
+
+默认打开当前用户可编辑的 FIFO 示例。进入「验证」，选择 `formal · Yosys + Z3`，点击「运行」。要打开已有工程，传入目录即可，路径含空格时加引号。
+
+```bash
+bash ./zcode-centos7-x86_64.run "/work/my chip"
+```
+
+GitHub 公开版提供知识库导入、检索和原文阅读功能。拥有 NPI 手册的用户可在「知识库」选择「添加 PDF 并归档」，导入自己的 `VC_APPS_NPI.pdf`。已授权的内部构建可随包预置文档，首次启动时自动加入当前账号的知识库。
+
+第一次启动会校验并展开文件，之后使用当前用户的缓存。可以从普通桌面账号运行，目标机需要可用的 X11 显示以及可执行的用户缓存目录。桌面使用包内 Linux 运行环境，可用时使用 KVM，其他机器使用软件模拟。默认给桌面运行环境分配 2 GiB 内存。程序缓存位于 `~/.cache/zcode-verification-agent/centos7/`，持久桌面配置、示例、知识库、作业证据和本次启动日志 `desktop.log` 位于 `~/.local/state/zcode-verification-agent/`。遵循 `XDG_CACHE_HOME` 和 `XDG_STATE_HOME`。
+
+项目文件与宿主共享。开源 Formal 工具随包提供。使用商业工具时，先在同一终端加载站点现有的工具与许可证环境，再运行相同命令。主机验证服务识别 `VCS_HOME`、`VERDI_HOME`、`VERIFICATION_IFV_HOME`，其他 Formal 工具可按[适配器说明](../formal/README.md)接入。已有本地文档归档的用户，可以在首次打开前将 `VERIFICATION_KNOWLEDGE_DIR` 指向自己的知识库目录，也可以在「知识库」页导入 PDF。
+
+本地工作台免登录。对话使用「设置 → 模型」配置的模型服务。若模型服务监听在 CentOS 宿主的回环地址，在桌面内填写 `http://10.0.2.2:端口` 作为宿主地址。桌面从当前会话取得 X11 授权。测试及日常启动均保留 Chromium 沙箱。
+
+### 重建单文件包
+
+以下命令用于 Debian 12 amd64 构建机。构建输入为项目的 `linux-unpacked` 桌面产物、干净的 Bookworm 用户空间、Debian 签名软件源中的 amd64 内核包，以及 PyMuPDF 1.25.5 的 CPython abi3 manylinux2014 x86-64 wheel。打包脚本核对 wheel 摘要，使用内核包中对应的模块，并将宿主辅助程序的依赖、版权声明与版本清单写入发行包。
+
+```bash
+apt-get install --no-install-recommends debootstrap qemu-system-x86 socat busybox-static squashfs-tools kmod cpio e2fsprogs poppler-utils poppler-data fonts-dejavu-core fonts-noto-cjk
+debootstrap --arch=amd64 --variant=minbase \
+  --include=dbus-x11,git,ca-certificates,libasound2,libatk-bridge2.0-0,libatspi2.0-0,libcairo2,libcups2,libdrm2,libgbm1,libgtk-3-0,libnss3,libsecret-1-0,libx11-xcb1,libxcb-dri3-0,libxcomposite1,libxdamage1,libxext6,libxfixes3,libxkbcommon0,libxkbfile1,libxrandr2,libxshmfence1,libxss1,libxtst6,libgl1,fonts-noto-cjk,fonts-dejavu-core,fonts-noto-color-emoji,iproute2,socat,bindfs,procps,xdg-utils,util-linux \
+  bookworm ./guest-root https://deb.debian.org/debian
+kernel=$(apt-cache depends linux-image-amd64 | sed -n 's/.*Depends: //p' | head -1)
+apt-get download "$kernel"
+bash deploy/centos7/portable/build.sh /path/to/linux-unpacked ./guest-root \
+  ./linux-image-*_amd64.deb ./pymupdf-1.25.5-*-manylinux2014_x86_64*.whl ./zcode-centos7-x86_64.run
+```
+
+制作含指定手册的内部包时，在构建命令末尾追加知识库目录和需要附带的文档 ID，例如 `/home/verification-agent/knowledge vc-apps-npi`。省略这些参数会生成空知识库的通用包。
+
+## 在已部署的 VM 启动
+
+在 VM 的图形桌面打开终端，使用当前桌面账号运行
+
+```bash
+bash /home/verification-agent/releases/zcode-centos7-x86_64.run
 ```
 
 启动后直接进入「验证」页。选好 SV、UVM 或 Formal 配置后点击「运行」。可以按运行 ID 查看日志、覆盖率或反例，并从原始源码快照重跑。需要通过对话提交作业时，可在 ZCode 设置中配置模型。「验证」页执行 EDA 作业无需 ZCode 账号或模型 API Key。

@@ -83,6 +83,10 @@ export class ZCodeProtocolRequestTimeoutError extends Error {
   }
 }
 
+export function getStorageStartupFirstStatusTimeoutMs(): number {
+  return process.env.ZCODE_CENTOS7_PORTABLE_DESKTOP === "1" ? 180_000 : 30_000;
+}
+
 export class ZCodeProtocolClient implements IDisposable {
   /** 与已连接 workspace 的 CLI 生命周期 owner 通信；此入口不拉起或重启整个进程。 */
   readonly sessionLifecycle = {
@@ -188,7 +192,10 @@ export class ZCodeProtocolClient implements IDisposable {
     private readonly transport: ZCodeProtocolTransport,
     options?: ZCodeProtocolClientOptions,
   ) {
-    this.storageStartup = new ZCodeStorageStartupGate(options?.requireStorageStartup ?? false);
+    this.storageStartup = new ZCodeStorageStartupGate(
+      options?.requireStorageStartup ?? false,
+      getStorageStartupFirstStatusTimeoutMs(),
+    );
     this.requestTimeoutMs = options?.requestTimeoutMs ?? DEFAULT_ZCODE_PROTOCOL_REQUEST_TIMEOUT_MS;
     this.disposables.push(
       transport.onMessage((message) => this.handleMessage(message)),

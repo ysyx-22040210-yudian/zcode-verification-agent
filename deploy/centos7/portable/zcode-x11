@@ -1,0 +1,4 @@
+#!/bin/sh
+# QEMU invokes one copy for each connection from the private guest display.
+exec "$ZCODE_PORTABLE_HOST/lib/ld-linux-x86-64.so.2" --library-path "$ZCODE_PORTABLE_HOST/lib" \
+  "$ZCODE_PORTABLE_HOST/socat" STDIO "$ZCODE_PORTABLE_X11"

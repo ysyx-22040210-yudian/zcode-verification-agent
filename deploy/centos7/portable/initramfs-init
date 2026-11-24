@@ -1,0 +1,14 @@
+#!/bin/busybox sh
+set -eu
+export PATH=/bin
+mount -t devtmpfs devtmpfs /dev
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+while read -r module; do insmod "/modules/$module"; done </module-order
+for i in $(seq 1 50); do [ -b /dev/vda ] && break; sleep .1; done
+mount -t squashfs -o ro /dev/vda /lower
+mount -t tmpfs tmpfs /writable
+mkdir /writable/upper /writable/work
+mount -t overlay overlay -o lowerdir=/lower,upperdir=/writable/upper,workdir=/writable/work /newroot
+for dir in dev sys proc; do mount --move "/$dir" "/newroot/$dir"; done
+exec switch_root /newroot /sbin/zcode-init

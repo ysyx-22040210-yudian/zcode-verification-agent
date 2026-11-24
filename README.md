@@ -1,6 +1,6 @@
 # ZCode
 
-> **验证 Agent** · CentOS 7 VM 原生桌面、SV/UVM/Formal 作业和免登录验证工作台。[部署与运行说明](deploy/centos7/README.md)
+> **验证 Agent** · 在 CentOS 7 x86_64 图形桌面执行 `bash ./zcode-centos7-x86_64.run` 即可打开免登录的 SV、UVM 和 Formal 验证工作台。[下载 CentOS 7 单文件版](https://github.com/ysyx-22040210-yudian/zcode-verification-agent/releases/tag/v3.18.2-centos7.1) · [部署与运行说明](deploy/centos7/README.md)
 
 <div align="center">
   <img src="public/logo/icons/1024x1024.png" alt="ZCode" width="128" height="128" />

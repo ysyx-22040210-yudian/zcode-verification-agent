@@ -1,6 +1,7 @@
 # 保持脚本文件 LF 换行，避免 Windows CRLF 导致 shebang 解析失败
 *.mjs text eol=lf
 *.sh  text eol=lf
+deploy/centos7/portable/* text=auto eol=lf
 
 # schema baseline 与运行时 dump 逐字节比对；Windows autocrlf 检出成 CRLF 会被
 # db:schema:check 误报为 schema 差异并阻断 pre-push，强制 LF。

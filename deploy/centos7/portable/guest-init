@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+mount -t tmpfs -o mode=755 tmpfs /run
+mount -t tmpfs -o mode=1777 tmpfs /tmp
+mkdir -p /dev/shm /dev/pts /run/zcode/session /run/zcode/kit /var/lib/zcode
+mount -t tmpfs -o mode=1777 tmpfs /dev/shm
+mount -t devpts devpts /dev/pts
+mount -t ext4 -o nosuid,nodev /dev/vdb /var/lib/zcode
+mount -t 9p -o trans=virtio,version=9p2000.L,msize=262144,access=any,nosuid,nodev session /run/zcode/session
+mount -t 9p -o trans=virtio,version=9p2000.L,msize=262144,cache=mmap,access=any,ro,nosuid,nodev kit /run/zcode/kit
+dev=$(ls /sys/class/net | grep -v '^lo$' | head -1)
+ip link set lo up
+ip link set "$dev" up
+ip addr add 10.0.2.15/24 dev "$dev"
+ip route add default via 10.0.2.2
+printf 'nameserver 10.0.2.3\n' > /etc/resolv.conf
+dbus-uuidgen --ensure=/etc/machine-id
+export PYTHONDONTWRITEBYTECODE=1
+result=0
+/run/zcode/kit/formal-toolchain/python/bin/python3.11 -I /usr/lib/zcode-portable/guest.py || result=$?
+printf '%s\n' "$result" >/run/zcode/session/exit
+sync
+umount /var/lib/zcode || true
+exec /bin/busybox poweroff -f

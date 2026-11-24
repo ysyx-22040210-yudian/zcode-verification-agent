@@ -7,7 +7,10 @@ import {
   zcodeStoragePreparationFrameSchema,
   type DatabaseStartupState,
 } from "@zcode/shared";
-import { resolveDefaultZCodeAgentCommand } from "@zcode/services/storage-startup";
+import {
+  getStorageStartupFirstStatusTimeoutMs,
+  resolveDefaultZCodeAgentCommand,
+} from "@zcode/services/storage-startup";
 
 type Phase = NonNullable<DatabaseStartupState["databasePhase"]>;
 import { workerMessageSchema } from "./contract.js";
@@ -45,7 +48,7 @@ export function prepareHostStorage(
     const firstStateTimer = setTimeout(() => {
       failure = statusError("startup_status_timeout");
       void worker.terminate();
-    }, 30_000);
+    }, getStorageStartupFirstStatusTimeoutMs());
     const abort = () => {
       failure = statusError("transport_closed");
       void worker.terminate();
@@ -123,7 +126,7 @@ export async function prepareSessionStorage(options: {
     const firstStateTimer = setTimeout(() => {
       failure = statusError("startup_status_timeout");
       terminate();
-    }, 30_000);
+    }, getStorageStartupFirstStatusTimeoutMs());
     options.signal.addEventListener("abort", abort, { once: true });
     // stdout 只有有界控制帧，stderr 排空但不把可能含本地路径的原始文本上报。
     child.stderr.resume();
